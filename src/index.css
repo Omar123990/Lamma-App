@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@plugin './hero.js';
+
+@source '../node_modules/@heroui/theme/dist';
+
+@custom-variant dark (&:is(.dark *));
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #9333ea;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::selection {
+  background-color: #9333ea;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #9333ea;
+  color: #ffffff;
+}

@@ -7,14 +7,12 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthContext } from "../../context/AuthContext";
+import { useMutation } from "@tanstack/react-query";
+import { signinUser } from "../../services/authAPI";
 
 const loginSchema = z.object({
-  email: z.string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-
-  password: z.string()
-    .min(1, "Password is required"),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export default function Login() {
@@ -22,26 +20,30 @@ export default function Login() {
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const navigate = useNavigate();
-  const { loginUser } = useContext(AuthContext);
+
+  const { setUserToken, setUserData } = useContext(AuthContext);
 
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     mode: "onTouched",
     resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async (data) => {
-    const loadingToast = toast.loading("Checking credentials...");
+  const { mutate, isPending } = useMutation({
+    mutationFn: signinUser,
 
-    try {
-      await loginUser(data);
+    onSuccess: (data) => {
 
-      toast.dismiss(loadingToast);
-      toast.success("Welcome back! 🚀", {
+      localStorage.setItem("userToken", data.token);
+
+      setUserToken(data.token);
+      setUserData(data.user);
+
+      toast.success(`Hello there! 🚀`, {
         duration: 3000,
         style: {
           backgroundImage: 'linear-gradient(to right, #9333ea, #db2777)',
@@ -49,22 +51,31 @@ export default function Login() {
           fontWeight: 'bold',
           border: '1px solid rgba(255,255,255,0.2)',
         },
-        iconTheme: {
-          primary: '#fff',
-          secondary: '#9333ea',
-        }
+        iconTheme: { primary: '#fff', secondary: '#9333ea' }
       });
 
       navigate("/");
+    },
 
-    } catch (error) {
-      toast.dismiss(loadingToast);
-
-      const errorMsg = typeof error === 'string' ? error : "Invalid email or password";
+    onError: (error) => {
+      const errorMsg = error.response?.data?.message || "Invalid email or password";
       toast.error(errorMsg + " ❌");
-
       setError("root", { message: errorMsg });
     }
+  });
+
+  const onSubmit = (data) => {
+    toast.loading("Signing in...", {
+      duration: 2000,
+      style: {
+        backgroundImage: 'linear-gradient(to right, #9333ea, #db2777)',
+        color: '#fff',
+        fontWeight: 'bold',
+        border: '1px solid rgba(255,255,255,0.2)',
+      },
+      iconTheme: { primary: '#fff', secondary: '#9333ea' }
+    });
+    mutate(data);
   };
 
   return (
@@ -131,11 +142,11 @@ export default function Login() {
 
           <Button
             type="submit"
-            isLoading={isSubmitting}
+            isLoading={isPending}
             className="w-full bg-linear-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-900/20"
             size="lg"
           >
-            {isSubmitting ? "Signing in..." : "Log In"}
+            {isPending ? "Signing in..." : "Log In"}
           </Button>
 
           <div className="flex justify-center gap-2 mt-4 text-sm text-gray-400">

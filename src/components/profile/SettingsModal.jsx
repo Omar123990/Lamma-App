@@ -25,16 +25,16 @@ export default function SettingsModal({ isOpen, onClose }) {
 
   const { mutate: changePass, isPending } = useMutation({
     mutationFn: changeUserPassword,
-    
+
     onSuccess: () => {
       toast.success("Password updated successfully 🔒");
-      
+
       setCurrentPassword("");
       setNewPassword("");
       setRePassword("");
-      
+
       onClose();
-      logout(); 
+      logout();
       navigate("/login");
       toast("Please login with your new password", { icon: "ℹ️" });
     },

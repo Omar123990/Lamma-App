@@ -17,10 +17,10 @@ export const getCurrentUser = async () => {
   if (!token) return null;
 
   const { data } = await axios.get(
-    "https://linked-posts.routemisr.com/users/profile-data", 
+    "https://linked-posts.routemisr.com/users/profile-data",
     { headers: { token } }
   );
-  
+
   return data.user;
 };
 
@@ -30,8 +30,8 @@ export const uploadProfilePhoto = async (imageFile) => {
   formData.append("photo", imageFile);
 
   const { data } = await axios.put(
-    "https://linked-posts.routemisr.com/users/upload-photo", 
-    formData, 
+    "https://linked-posts.routemisr.com/users/upload-photo",
+    formData,
     { headers: { token, "Content-Type": "multipart/form-data" } }
   );
   return data;
@@ -40,8 +40,8 @@ export const uploadProfilePhoto = async (imageFile) => {
 export const changeUserPassword = async ({ password, newPassword }) => {
   const token = localStorage.getItem("userToken");
   const { data } = await axios.patch(
-    "https://linked-posts.routemisr.com/users/change-password", 
-    { password, newPassword }, 
+    "https://linked-posts.routemisr.com/users/change-password",
+    { password, newPassword },
     { headers: { token } }
   );
   return data;

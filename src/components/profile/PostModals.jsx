@@ -31,13 +31,13 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
   };
 
   const handleSave = () => {
-    onConfirm(body, selectedImage); 
+    onConfirm(body, selectedImage);
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       backdrop="blur"
       classNames={{
         base: "bg-[#18181b] border border-white/10 text-white",
@@ -55,19 +55,19 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
             onValueChange={setBody}
             variant="bordered"
             classNames={{
-                input: "text-white",
-                inputWrapper: "border-white/20 hover:border-white/40 focus:border-purple-500"
+              input: "text-white",
+              inputWrapper: "border-white/20 hover:border-white/40 focus:border-purple-500"
             }}
           />
 
           {imagePreview && (
             <div className="relative mt-2 group">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                className="w-full max-h-60 object-cover rounded-xl border border-white/10" 
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full max-h-60 object-cover rounded-xl border border-white/10"
               />
-              <button 
+              <button
                 onClick={() => fileInputRef.current.click()}
                 className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-purple-600 transition opacity-0 group-hover:opacity-100"
                 title="Change Image"
@@ -78,22 +78,22 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
           )}
 
           {!imagePreview && (
-            <Button 
-                variant="flat" 
-                color="secondary" 
-                startContent={<ImageIcon size={18} />}
-                onPress={() => fileInputRef.current.click()}
-                className="mt-2 w-fit"
+            <Button
+              variant="flat"
+              color="secondary"
+              startContent={<ImageIcon size={18} />}
+              onPress={() => fileInputRef.current.click()}
+              className="mt-2 w-fit"
             >
-                Add Image
+              Add Image
             </Button>
           )}
 
-          <input 
-            type="file" 
-            hidden 
-            ref={fileInputRef} 
-            onChange={handleImageSelect} 
+          <input
+            type="file"
+            hidden
+            ref={fileInputRef}
+            onChange={handleImageSelect}
             accept="image/*"
           />
 
@@ -102,9 +102,9 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
           <Button color="danger" variant="light" onPress={onClose}>
             Cancel
           </Button>
-          <Button 
-            color="primary" 
-            onPress={handleSave} 
+          <Button
+            color="primary"
+            onPress={handleSave}
             isLoading={isProcessing}
             className="bg-gradient-to-tr from-purple-600 to-pink-600 font-bold"
           >
@@ -118,13 +118,13 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
 
 export const DeleteModal = ({ isOpen, onClose, onConfirm, isProcessing }) => {
   return (
-    <Modal 
-        isOpen={isOpen} 
-        onClose={onClose} 
-        backdrop="blur"
-        classNames={{
-            base: "bg-[#18181b] border border-white/10 text-white",
-        }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      backdrop="blur"
+      classNames={{
+        base: "bg-[#18181b] border border-white/10 text-white",
+      }}
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1 text-red-500">Delete Post</ModalHeader>

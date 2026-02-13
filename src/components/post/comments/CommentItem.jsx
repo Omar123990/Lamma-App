@@ -28,8 +28,8 @@ export default function CommentItem({ comment, postId }) {
   const isOwner = myId === creatorId;
 
   const rawPhoto = comment.commentCreator?.photo;
-  const commenterPhoto = (rawPhoto && !rawPhoto.includes("undefined")) 
-    ? rawPhoto 
+  const commenterPhoto = (rawPhoto && !rawPhoto.includes("undefined"))
+    ? rawPhoto
     : "https://linked-posts.routemisr.com/uploads/default-profile.png";
 
   const [isEditing, setIsEditing] = useState(false);
@@ -65,9 +65,9 @@ export default function CommentItem({ comment, postId }) {
 
   return (
     <div className={`flex gap-3 group ${isDeleting ? "opacity-50 pointer-events-none" : ""}`}>
-      
-      <Avatar 
-        src={commenterPhoto} 
+
+      <Avatar
+        src={commenterPhoto}
         className="w-8 h-8 flex-shrink-0 mt-1"
         isBordered
         color="default"
@@ -75,17 +75,17 @@ export default function CommentItem({ comment, postId }) {
 
       <div className="flex-1">
         <div className="bg-gray-100 shadow dark:shadow-none p-3 dark:bg-gray-900/50 text-white dark:text-gray-100 rounded-2xl rounded-tl-none border border-white/5 relative hover:border-white/10 transition-colors">
-          
+
           <div className="flex justify-between items-start mb-1">
             <span className="font-bold text-sm text-gray-900 dark:text-white">
               {comment.commentCreator?.name || "User"}
             </span>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-500 dark:text-white font-medium">
                 {formatTimeAgo(comment.createdAt)}
               </span>
-              
+
               {isOwner && !isEditing && (
                 <Dropdown className="bg-[#18181b] border border-white/10 dark">
                   <DropdownTrigger>
@@ -94,17 +94,17 @@ export default function CommentItem({ comment, postId }) {
                     </button>
                   </DropdownTrigger>
                   <DropdownMenu variant="faded" aria-label="Comment Actions">
-                    <DropdownItem 
-                      key="edit" 
+                    <DropdownItem
+                      key="edit"
                       startContent={<Edit2 size={14} />}
                       onPress={() => setIsEditing(true)}
                     >
                       Edit
                     </DropdownItem>
-                    <DropdownItem 
-                      key="delete" 
-                      className="text-danger" 
-                      color="danger" 
+                    <DropdownItem
+                      key="delete"
+                      className="text-danger"
+                      color="danger"
                       startContent={<Trash2 size={14} />}
                       onPress={() => remove()}
                     >
@@ -118,11 +118,11 @@ export default function CommentItem({ comment, postId }) {
 
           {isEditing ? (
             <form onSubmit={handleUpdateSubmit} className="flex gap-2 items-center mt-2 animate-in fade-in">
-              <Input 
+              <Input
                 autoFocus
-                size="sm" 
-                value={editValue} 
-                onValueChange={setEditValue} 
+                size="sm"
+                value={editValue}
+                onValueChange={setEditValue}
                 className="text-white"
                 classNames={{ inputWrapper: "bg-black/20 h-8 border-white/20" }}
               />

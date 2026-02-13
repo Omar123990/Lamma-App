@@ -12,7 +12,7 @@ export default function ProfilePosts({ myPosts, isLoading }) {
     };
 
     const safePosts = Array.isArray(myPosts) ? myPosts : [];
-    const validPosts = safePosts.filter(post => post && post._id).reverse(); 
+    const validPosts = safePosts.filter(post => post && post._id).reverse();
 
     return (
         <Card className="w-full bg-white/5 border border-white/10 backdrop-blur-md min-h-[200px]">

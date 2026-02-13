@@ -16,27 +16,27 @@ export default function AuthContextProvider({ children }) {
 
   const saveUserData = () => {
     const encodedToken = localStorage.getItem("userToken");
-    
+
     if (!encodedToken) {
-        logout();
-        return;
+      logout();
+      return;
     }
 
     try {
       const decoded = jwtDecode(encodedToken);
-      
+
       const normalizedUser = {
-          _id: decoded.user || decoded.id || decoded.userId || decoded._id,
-          name: decoded.name || null
+        _id: decoded.user || decoded.id || decoded.userId || decoded._id,
+        name: decoded.name || null
       };
 
       if (!normalizedUser._id) {
-          console.error("❌ Token invalid. Logging out...");
-          logout();
-          return;
+        console.error("❌ Token invalid. Logging out...");
+        logout();
+        return;
       }
 
-      console.log("✅ User Connected:", normalizedUser); 
+      console.log("✅ User Connected:", normalizedUser);
       setUserData(normalizedUser);
       setUserToken(encodedToken);
 

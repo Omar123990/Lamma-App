@@ -30,11 +30,11 @@ export default function PostCard({ post, disableModal = false }) {
 
     const [editContent, setEditContent] = useState(body);
     const [editImage, setEditImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(image); 
+    const [previewImage, setPreviewImage] = useState(image);
     const fileInputRef = useRef(null);
 
-    useEffect(() => { 
-        setEditContent(body); 
+    useEffect(() => {
+        setEditContent(body);
         setPreviewImage(image);
     }, [body, image]);
 
@@ -165,9 +165,9 @@ export default function PostCard({ post, disableModal = false }) {
                 {!disableModal && <CommentPreview postId={_id} onClick={handleOpenPost} />}
             </CardFooter>
 
-            <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} backdrop="blur" 
-                classNames={{ 
-                    base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-black dark:text-white" 
+            <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} backdrop="blur"
+                classNames={{
+                    base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-black dark:text-white"
                 }}>
                 <ModalContent>
                     {(onClose) => (
@@ -189,7 +189,7 @@ export default function PostCard({ post, disableModal = false }) {
             </Modal>
 
             <Modal isOpen={isEditOpen} onOpenChange={onEditOpenChange} backdrop="blur" size="2xl"
-                classNames={{ 
+                classNames={{
                     base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-black dark:text-white",
                     closeButton: "hover:bg-gray-100 dark:hover:bg-white/10"
                 }}>
@@ -216,27 +216,27 @@ export default function PostCard({ post, disableModal = false }) {
                                 />
 
                                 <div className="mt-4">
-                                    <input 
-                                        type="file" 
-                                        hidden 
-                                        ref={fileInputRef} 
-                                        onChange={handleImageSelect} 
+                                    <input
+                                        type="file"
+                                        hidden
+                                        ref={fileInputRef}
+                                        onChange={handleImageSelect}
                                         accept="image/*"
                                     />
-                                    
+
                                     {previewImage ? (
                                         <div className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-white/10">
                                             <img src={previewImage} alt="Preview" className="w-full max-h-60 object-cover" />
-                                            <button 
+                                            <button
                                                 onClick={removeSelectedImage}
                                                 className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
                                             >
                                                 <X size={16} />
                                             </button>
                                             <div className="absolute bottom-2 right-2">
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="flat" 
+                                                <Button
+                                                    size="sm"
+                                                    variant="flat"
                                                     className="bg-black/60 text-white backdrop-blur-md"
                                                     startContent={<ImageIcon size={16} />}
                                                     onPress={() => fileInputRef.current.click()}
@@ -246,8 +246,8 @@ export default function PostCard({ post, disableModal = false }) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <Button 
-                                            variant="flat" 
+                                        <Button
+                                            variant="flat"
                                             className="w-full h-16 border-2 border-dashed border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-gray-500"
                                             startContent={<ImageIcon size={24} />}
                                             onPress={() => fileInputRef.current.click()}
@@ -259,9 +259,9 @@ export default function PostCard({ post, disableModal = false }) {
                             </ModalBody>
                             <ModalFooter className="border-t border-gray-200 dark:border-white/10 pt-4">
                                 <Button color="danger" variant="light" onPress={onClose} startContent={<XCircle size={18} />}>Cancel</Button>
-                                <Button 
-                                    className="bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20" 
-                                    onPress={() => handleEdit()} 
+                                <Button
+                                    className="bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20"
+                                    onPress={() => handleEdit()}
                                     isLoading={isEditing}
                                     startContent={!isEditing && <Check size={18} />}
                                 >

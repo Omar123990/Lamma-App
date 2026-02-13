@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { getCurrentUser } from "../services/authAPI";
-import { getUserPosts, updatePost } from "../services/postsAPI"; 
+import { getUserPosts, updatePost } from "../services/postsAPI";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileAbout from "../components/profile/ProfileAbout";
 import ProfilePosts from "../components/profile/ProfilePosts";
@@ -17,11 +17,11 @@ export default function Profile() {
 
   const [selectedPost, setSelectedPost] = useState(null);
 
-  const { 
-    isOpen: isEditOpen, 
-    onOpen: onEditOpen, 
-    onOpenChange: onEditChange, 
-    onClose: onEditClose 
+  const {
+    isOpen: isEditOpen,
+    onOpen: onEditOpen,
+    onOpenChange: onEditChange,
+    onClose: onEditClose
   } = useDisclosure();
 
   const { data: userProfile, isLoading: loadingProfile } = useQuery({
@@ -33,7 +33,7 @@ export default function Profile() {
   const { data: myPosts, isLoading: loadingPosts } = useQuery({
     queryKey: ['posts', userProfile?._id],
     queryFn: () => getUserPosts(userProfile?._id),
-    enabled: !!userProfile?._id 
+    enabled: !!userProfile?._id
   });
 
   const { mutate: handleUpdate, isPending: isUpdating } = useMutation({
@@ -41,7 +41,7 @@ export default function Profile() {
     onSuccess: () => {
       toast.success("Post updated successfully ✨");
       onEditClose();
-      queryClient.invalidateQueries({ queryKey: ['posts'] }); 
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
     onError: (error) => {
       toast.error(error.response?.data?.error || "Failed to update post");
@@ -59,7 +59,7 @@ export default function Profile() {
     if (newImageFile) {
       formData.append("image", newImageFile);
     }
-    
+
     handleUpdate({ postId: selectedPost._id, formData });
   };
 
@@ -82,7 +82,7 @@ export default function Profile() {
       <ProfilePosts
         myPosts={myPosts}
         isLoading={loadingPosts}
-        onEdit={handleOpenEdit} 
+        onEdit={handleOpenEdit}
       />
 
       <EditModal
@@ -90,7 +90,7 @@ export default function Profile() {
         onClose={onEditChange}
         onConfirm={handleConfirmEdit}
         post={selectedPost}
-        isProcessing={isUpdating} 
+        isProcessing={isUpdating}
       />
 
       <PostDetailModal />

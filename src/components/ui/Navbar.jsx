@@ -1,14 +1,27 @@
 import { useContext } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { User, Sun, Moon, Home } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { User, Sun, Moon, Home, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AuthContext } from "../../context/AuthContext";
 import { Avatar } from "@heroui/react";
 
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentUser } from "../../services/authAPI";
+
 export default function Navbar() {
     const { resolvedTheme, setTheme } = useTheme();
-    const { userData } = useContext(AuthContext);
+
+    const { userToken, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
     const location = useLocation();
+
+    const { data: apiUser } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: getCurrentUser,
+        enabled: !!userToken,
+    });
+
+    const userData = apiUser;
 
     const isProfilePage = location.pathname === '/profile';
 
@@ -16,12 +29,17 @@ export default function Navbar() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    const handleLogout = () => {
+        logout();
+        navigate("/login");
+    };
+
     return (
         <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] transition-all duration-300">
 
             <div className="
                 flex items-center justify-between 
-                px-8 py-4                            
+                px-8 py-4                                    
                 max-w-7xl mx-auto                  
                 
                 backdrop-blur-2xl                    
@@ -59,16 +77,30 @@ export default function Navbar() {
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                         className="
                             p-2.5 rounded-full transition-all duration-300
-                            bg-gray-100 text-purple-600 hover:bg-gray-200
-                            dark:bg-white/5 dark:text-yellow-400 dark:hover:bg-white/10
+                            bg-gray-100 text-purple-600 hover:bg-gray-200 cursor-pointer
+                            dark:bg-white/5 dark:text-yellow-400 dark:hover:bg-white/10 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20
                         "
-                        title="تبديل المظهر"
+                        title="Toggle Theme"
                     >
                         {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
 
+                    {userToken && (
+                        <button
+                            onClick={handleLogout}
+                            className="
+                                p-2.5 rounded-full hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300
+                                bg-gray-100 text-red-500 hover:bg-red-100 cursor-pointer
+                                dark:bg-white/5 dark:text-red-400 dark:hover:bg-red-500/20
+                            "
+                            title="Log Out"
+                        >
+                            <LogOut size={20} />
+                        </button>
+                    )}
+
                     {isProfilePage ? (
-                        <Link to="/" onClick={scrollToTop} className="group relative" title="الرئيسية">
+                        <Link to="/" onClick={scrollToTop} className="group relative" title="Home">
                             <div className="
                                 relative w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300
                                 bg-gray-100 border-gray-200 text-gray-600 hover:bg-purple-100 hover:text-purple-600 hover:border-purple-200
@@ -78,11 +110,16 @@ export default function Navbar() {
                             </div>
                         </Link>
                     ) : (
-                        <Link to="/profile" onClick={scrollToTop} className="group relative block" title="ملفي الشخصي">
+                        <Link
+                            to={userToken ? "/profile" : "/login"}
+                            onClick={scrollToTop}
+                            className="group relative block"
+                            title={userToken ? "My Profile" : "Login"}
+                        >
                             <div className="absolute -inset-0.5 rounded-full blur opacity-0 transition duration-300 bg-gradient-to-r from-pink-600 to-purple-600 group-hover:opacity-70"></div>
 
                             <div className="relative">
-                                {userData?.photo ? (
+                                {userToken && userData?.photo ? (
                                     <Avatar
                                         src={userData.photo}
                                         className="w-10 h-10 transition-transform group-hover:scale-105"

@@ -1,11 +1,12 @@
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input } from "@heroui/react";
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { Lock, Eye, EyeOff, Save, LogOut, Sun, Moon } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import { useTheme } from "next-themes";
+import { useMutation } from "@tanstack/react-query";
+import { changeUserPassword } from "../../services/authAPI";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const { logout } = useContext(AuthContext);
@@ -16,15 +17,35 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [newPassword, setNewPassword] = useState("");
   const [rePassword, setRePassword] = useState("");
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const [isVisibleCurrent, setIsVisibleCurrent] = useState(false);
   const [isVisibleNew, setIsVisibleNew] = useState(false);
   const [isVisibleRe, setIsVisibleRe] = useState(false);
 
   const toggleVisibility = (setter) => setter((prev) => !prev);
 
-  const handleChangePassword = async () => {
+  const { mutate: changePass, isPending } = useMutation({
+    mutationFn: changeUserPassword,
+    
+    onSuccess: () => {
+      toast.success("Password updated successfully 🔒");
+      
+      setCurrentPassword("");
+      setNewPassword("");
+      setRePassword("");
+      
+      onClose();
+      logout(); 
+      navigate("/login");
+      toast("Please login with your new password", { icon: "ℹ️" });
+    },
+
+    onError: (error) => {
+      const errorMsg = error.response?.data?.message || "Failed to update password";
+      toast.error(errorMsg);
+    }
+  });
+
+  const onSubmitPasswordChange = () => {
     if (!currentPassword || !newPassword || !rePassword) {
       return toast.error("All fields are required");
     }
@@ -34,36 +55,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     if (newPassword.length < 6) {
       return toast.error("Password must be at least 6 characters");
     }
-
-    setIsLoading(true);
-    const loadingToast = toast.loading("Updating password...");
-
-    try {
-      const token = localStorage.getItem("userToken");
-      const payload = {
-        password: currentPassword,
-        newPassword: newPassword
-      };
-
-      const { data } = await axios.patch("https://linked-posts.routemisr.com/users/change-password", payload, {
-        headers: { token }
-      });
-
-      if (data.message === "success") {
-        toast.success("Password updated successfully 🔒", { id: loadingToast });
-        setCurrentPassword("");
-        setNewPassword("");
-        setRePassword("");
-        onClose();
-      }
-
-    } catch (error) {
-      console.error(error);
-      const errorMsg = error.response?.data?.message || "Failed to update password";
-      toast.error(errorMsg, { id: loadingToast });
-    } finally {
-      setIsLoading(false);
-    }
+    changePass({ password: currentPassword, newPassword: newPassword });
   };
 
   const handleLogout = () => {
@@ -98,7 +90,6 @@ export default function SettingsModal({ isOpen, onClose }) {
 
               <div className="space-y-4">
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Appearance</p>
-
                 <div className="flex gap-3">
                   <button
                     onClick={() => setTheme('light')}
@@ -178,9 +169,9 @@ export default function SettingsModal({ isOpen, onClose }) {
 
                 <Button
                   className="w-full bg-gradient-to-tr from-purple-600 to-pink-600 text-white font-bold shadow-lg"
-                  onPress={handleChangePassword}
-                  isLoading={isLoading}
-                  startContent={!isLoading && <Save size={18} />}
+                  onPress={onSubmitPasswordChange}
+                  isLoading={isPending}
+                  startContent={!isPending && <Save size={18} />}
                 >
                   Update Password
                 </Button>
@@ -189,7 +180,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               <div className="w-full h-px bg-gray-200 dark:bg-white/10 my-2"></div>
 
               <div className="space-y-2">
-                <p className="text-red-500 text-sm font-semibold uppercase tracking-wider">Danger Zone</p>
+                <p className="text-red-500 text-sm font-semibold uppercase tracking-wider">Log Out Zone</p>
                 <Button
                   color="danger"
                   variant="flat"
@@ -204,9 +195,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             </ModalBody>
 
             <ModalFooter>
-              <Button variant="light" onPress={onClose} className="font-semibold border
-        border-gray-300 text-gray-700 hover:bg-gray-50
-        dark:border-white/20 dark:text-gray-300 dark:hover:bg-white/5">
+              <Button variant="light" onPress={onClose} className="font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-300 dark:hover:bg-white/5">
                 Close
               </Button>
             </ModalFooter>

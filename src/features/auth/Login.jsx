@@ -21,7 +21,7 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  const { setUserToken, setUserData } = useContext(AuthContext);
+  const { saveUserData } = useContext(AuthContext);
 
   const {
     register,
@@ -37,11 +37,9 @@ export default function Login() {
     mutationFn: signinUser,
 
     onSuccess: (data) => {
-
       localStorage.setItem("userToken", data.token);
 
-      setUserToken(data.token);
-      setUserData(data.user);
+      saveUserData();
 
       toast.success(`Hello there! 🚀`, {
         duration: 3000,
@@ -143,7 +141,7 @@ export default function Login() {
           <Button
             type="submit"
             isLoading={isPending}
-            className="w-full bg-linear-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-900/20"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-900/20"
             size="lg"
           >
             {isPending ? "Signing in..." : "Log In"}

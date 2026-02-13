@@ -1,9 +1,9 @@
 import { Card, CardHeader, Button, Skeleton } from "@heroui/react";
-import { Layout, Trash2, Edit, FileText, Home } from "lucide-react";
+import { Layout, FileText, Home } from "lucide-react";
 import PostCard from "../post/PostCard";
 import { useNavigate } from "react-router-dom";
 
-export default function ProfilePosts({ myPosts, isLoading, onEdit, onDelete }) {
+export default function ProfilePosts({ myPosts, isLoading }) {
     const navigate = useNavigate();
 
     const goToHome = () => {
@@ -12,7 +12,7 @@ export default function ProfilePosts({ myPosts, isLoading, onEdit, onDelete }) {
     };
 
     const safePosts = Array.isArray(myPosts) ? myPosts : [];
-    const validPosts = safePosts.filter(post => post && post._id);
+    const validPosts = safePosts.filter(post => post && post._id).reverse(); 
 
     return (
         <Card className="w-full bg-white/5 border border-white/10 backdrop-blur-md min-h-[200px]">
@@ -27,14 +27,14 @@ export default function ProfilePosts({ myPosts, isLoading, onEdit, onDelete }) {
                         {[1, 2, 3, 4].map((n) => (
                             <Card key={n} className="w-full space-y-5 p-4 bg-white/5 border border-white/10" radius="lg">
                                 <div className="flex gap-3">
-                                    <Skeleton className="rounded-full w-12 h-12" />
+                                    <Skeleton className="rounded-full w-12 h-12 bg-white/10" />
                                     <div className="w-full flex flex-col gap-2">
-                                        <Skeleton className="h-3 w-3/5 rounded-lg" />
-                                        <Skeleton className="h-3 w-4/5 rounded-lg" />
+                                        <Skeleton className="h-3 w-3/5 rounded-lg bg-white/10" />
+                                        <Skeleton className="h-3 w-4/5 rounded-lg bg-white/10" />
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <Skeleton className="h-20 rounded-lg" />
+                                    <Skeleton className="h-20 rounded-lg bg-white/10" />
                                 </div>
                             </Card>
                         ))}
@@ -42,25 +42,7 @@ export default function ProfilePosts({ myPosts, isLoading, onEdit, onDelete }) {
                 ) : validPosts.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {validPosts.map((post) => (
-                            <div key={post._id} className="relative group">
-                                <PostCard post={post} />
-
-                                <div className="absolute top-4 right-4 z-20 flex gap-2">
-                                    <button
-                                        onClick={() => onDelete(post)}
-                                        className="bg-black/60 text-red-500 p-2 rounded-full backdrop-blur-md border border-white/10 hover:bg-red-600 hover:text-white transition shadow-lg cursor-pointer"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-
-                                    <button
-                                        onClick={() => onEdit(post)}
-                                        className="bg-black/60 text-blue-400 p-2 rounded-full backdrop-blur-md border border-white/10 hover:bg-blue-600 hover:text-white transition shadow-lg cursor-pointer"
-                                    >
-                                        <Edit size={18} />
-                                    </button>
-                                </div>
-                            </div>
+                            <PostCard key={post._id} post={post} />
                         ))}
                     </div>
                 ) : (

@@ -10,6 +10,7 @@ import ProfileAbout from "../components/profile/ProfileAbout";
 import ProfilePosts from "../components/profile/ProfilePosts";
 import PostDetailModal from "../components/post/PostDetailModal";
 import CreatePost from "../components/post/CreatePost";
+import { Helmet } from "react-helmet-async";
 
 export default function Profile() {
   const { id } = useParams();
@@ -32,9 +33,14 @@ export default function Profile() {
 
   if (loadingProfile) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Spinner size="lg" color="secondary" />
-      </div>
+      <>
+        <Helmet>
+          <title>Loading Profile... | Lamma</title>
+        </Helmet>
+        <div className="flex justify-center items-center h-screen">
+          <Spinner size="lg" color="secondary" />
+        </div>
+      </>
     );
   }
 
@@ -46,13 +52,24 @@ export default function Profile() {
 
   if (!actualUser)
     return (
-      <div className="text-gray-500 text-center mt-20 font-bold text-xl">
-        User not found
-      </div>
+      <>
+        <Helmet>
+          <title>User Not Found | Lamma</title>
+        </Helmet>
+        <div className="text-gray-500 text-center mt-20 font-bold text-xl">
+          User not found
+        </div>
+      </>
     );
 
   return (
     <div className="space-y-6 w-full pb-10">
+      <Helmet>
+        <title>
+          {actualUser?.name ? `${actualUser.name} | Lamma` : "Profile | Lamma"}
+        </title>
+      </Helmet>
+
       <ProfileHeader
         userInfo={actualUser}
         myPostsCount={userPosts?.length || 0}

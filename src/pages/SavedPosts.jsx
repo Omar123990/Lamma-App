@@ -3,6 +3,7 @@ import { getSavedPosts } from "../services/postsAPI";
 import PostCard from "../components/post/PostCard";
 import { Spinner } from "@heroui/react";
 import { Bookmark, Inbox } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function SavedPosts() {
   const { data: savedPosts, isLoading } = useQuery({
@@ -12,6 +13,10 @@ export default function SavedPosts() {
 
   return (
     <div className="space-y-6 w-full pb-10">
+      <Helmet>
+        <title>Saved Posts | Lamma</title>
+      </Helmet>
+
       <div className="flex items-center gap-3 bg-white/20 dark:bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-white/40 dark:border-white/10 shadow-sm">
         <div className="p-3 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 rounded-2xl">
           <Bookmark size={24} />

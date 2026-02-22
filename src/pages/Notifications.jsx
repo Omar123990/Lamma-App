@@ -9,6 +9,7 @@ import { BellOff, Check } from "lucide-react";
 import { Spinner, Button } from "@heroui/react";
 import toast from "react-hot-toast";
 import NotificationItem from "../components/notifications/NotificationItem";
+import { Helmet } from "react-helmet-async";
 
 export default function Notifications() {
   const queryClient = useQueryClient();
@@ -49,6 +50,14 @@ export default function Notifications() {
 
   return (
     <div className="max-w-3xl mx-auto pt-24 px-4 pb-20">
+      <Helmet>
+        <title>
+          {unreadCount > 0
+            ? `(${unreadCount}) Notifications | Lamma`
+            : "Notifications | Lamma"}
+        </title>
+      </Helmet>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">

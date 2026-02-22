@@ -10,6 +10,7 @@ import { AuthContext } from "../context/AuthContext";
 import PostDetailModal from "../components/post/PostDetailModal";
 import FollowSuggestions from "../components/home/FollowSuggestions";
 import { Sparkles, Users } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function Home() {
   const { userData: contextUser } = useContext(AuthContext);
@@ -63,6 +64,10 @@ export default function Home() {
 
   return (
     <div className="space-y-6 w-full pb-28 relative">
+      <Helmet>
+        <title>Home | Lamma</title>
+      </Helmet>
+
       <CreatePost />
 
       <div className="lg:hidden">

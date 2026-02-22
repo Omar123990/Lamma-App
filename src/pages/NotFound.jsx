@@ -1,12 +1,17 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@heroui/react";
 import { Home, ArrowLeft, MapPinOff } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function NotFound() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 animate-appearance-in">
+      <Helmet>
+        <title>Page Not Found | Lamma</title>
+      </Helmet>
+
       <div className="max-w-md w-full text-center relative z-10 p-8 rounded-[3rem] bg-white/40 dark:bg-[#0f0f11]/60 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-[0_20px_60px_rgba(147,51,234,0.15)] overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-purple-500/20 dark:bg-purple-500/10 rounded-full blur-3xl -z-10"></div>
 

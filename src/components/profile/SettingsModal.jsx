@@ -1,62 +1,44 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input } from "@heroui/react";
-import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-import { Lock, Eye, EyeOff, Save, LogOut, Sun, Moon } from "lucide-react";
+import { useState, useRef, useContext } from "react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  Avatar,
+  Tab,
+  Tabs,
+} from "@heroui/react";
+import { Lock, Camera, LogOut } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { changePassword, uploadProfilePhoto } from "../../services/authAPI";
 import { AuthContext } from "../../context/AuthContext";
-import { useTheme } from "next-themes";
-import { useMutation } from "@tanstack/react-query";
-import { changeUserPassword } from "../../services/authAPI";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
-export default function SettingsModal({ isOpen, onClose }) {
+export default function SettingsModal({ isOpen, onClose, userInfo }) {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef(null);
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [rePassword, setRePassword] = useState("");
-
-  const [isVisibleCurrent, setIsVisibleCurrent] = useState(false);
-  const [isVisibleNew, setIsVisibleNew] = useState(false);
-  const [isVisibleRe, setIsVisibleRe] = useState(false);
-
-  const toggleVisibility = (setter) => setter((prev) => !prev);
-
-  const { mutate: changePass, isPending } = useMutation({
-    mutationFn: changeUserPassword,
-
-    onSuccess: () => {
-      toast.success("Password updated successfully 🔒");
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setRePassword("");
-
-      onClose();
-      logout();
-      navigate("/login");
-      toast("Please login with your new password", { icon: "ℹ️" });
-    },
-
-    onError: (error) => {
-      const errorMsg = error.response?.data?.message || "Failed to update password";
-      toast.error(errorMsg);
-    }
+  const [selectedTab, setSelectedTab] = useState("photo");
+  const [passwords, setPasswords] = useState({
+    current: "",
+    new: "",
+    reNew: "",
   });
 
-  const onSubmitPasswordChange = () => {
-    if (!currentPassword || !newPassword || !rePassword) {
-      return toast.error("All fields are required");
-    }
-    if (newPassword !== rePassword) {
-      return toast.error("New passwords do not match");
-    }
-    if (newPassword.length < 6) {
-      return toast.error("Password must be at least 6 characters");
-    }
-    changePass({ password: currentPassword, newPassword: newPassword });
-  };
+  const [previewImage, setPreviewImage] = useState(userInfo?.photo || null);
+  const [prevUserInfo, setPrevUserInfo] = useState(userInfo);
+  const [imageFile, setImageFile] = useState(null);
+
+  if (userInfo !== prevUserInfo) {
+    setPrevUserInfo(userInfo);
+    setPreviewImage(userInfo?.photo || null);
+  }
 
   const handleLogout = () => {
     logout();
@@ -64,139 +46,239 @@ export default function SettingsModal({ isOpen, onClose }) {
     onClose();
   };
 
-  const inputClassNames = {
-    input: "text-black dark:text-white",
-    inputWrapper: "border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/40 group-data-[focus=true]:border-purple-500 bg-transparent"
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
   };
+
+  const { mutate: updatePhoto, isPending: isUploading } = useMutation({
+    mutationFn: () => {
+      const formData = new FormData();
+      formData.append("photo", imageFile);
+      return uploadProfilePhoto(formData);
+    },
+    onSuccess: () => {
+      toast.success("Profile photo updated! 📸");
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({
+        queryKey: ["userProfile", userInfo?._id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      onClose();
+    },
+    onError: (err) =>
+      toast.error(err.response?.data?.error || "Failed to update photo"),
+  });
+
+  const { mutate: updatePass, isPending: isChangingPass } = useMutation({
+    mutationFn: () =>
+      changePassword({
+        password: passwords.current,
+        newPassword: passwords.new,
+      }),
+    onSuccess: () => {
+      toast.success("Password changed successfully! 🔐 Please login again.");
+      handleLogout();
+    },
+    onError: (err) =>
+      toast.error(err.response?.data?.error || "Failed to change password"),
+  });
+
+  const handlePasswordSubmit = () => {
+    if (passwords.new !== passwords.reNew) {
+      return toast.error("New passwords do not match! ❌");
+    }
+    if (passwords.new.length < 6) {
+      return toast.error("Password must be at least 6 characters long.");
+    }
+    updatePass();
+  };
+
+  const getUserPhoto = (photo) => {
+    if (
+      !photo ||
+      String(photo).includes("undefined") ||
+      String(photo).includes("null")
+    )
+      return "https://linked-posts.routemisr.com/uploads/default-profile.png";
+    if (photo.startsWith("http") || photo.startsWith("blob")) return photo;
+    return `https://linked-posts.routemisr.com/${photo}`;
+  };
+
+  const displayPhoto = getUserPhoto(previewImage);
 
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={onClose}
       backdrop="blur"
+      size="md"
       classNames={{
-        base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white",
-        closeButton: "hover:bg-gray-100 dark:hover:bg-white/10 active:bg-gray-200 dark:active:bg-white/20 text-gray-500 dark:text-white",
+        base: "bg-white/90 dark:bg-[#0f0f11]/90 backdrop-blur-2xl border border-gray-200 dark:border-white/10 shadow-[0_20px_60px_rgba(147,51,234,0.15)] rounded-3xl",
+        header: "border-b border-gray-200/50 dark:border-white/10",
+        footer: "border-t border-gray-200/50 dark:border-white/10",
+        closeButton:
+          "hover:bg-gray-100 dark:hover:bg-white/10 active:bg-gray-200",
       }}
     >
       <ModalContent>
-        {(onClose) => (
+        {(close) => (
           <>
-            <ModalHeader className="flex flex-col gap-1 text-2xl font-bold">
-              Settings ⚙️
+            <ModalHeader className="flex flex-col gap-1 font-bold">
+              Settings
             </ModalHeader>
-
-            <ModalBody className="gap-4">
-
-              <div className="space-y-4">
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Appearance</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setTheme('light')}
-                    className={`flex-1 p-4 rounded-xl border flex flex-col items-center gap-2 transition-all duration-300 ${theme === 'light'
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-white shadow-md'
-                      : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400'
-                      }`}
-                  >
-                    <Sun size={24} className={theme === 'light' ? 'fill-current' : ''} />
-                    <span className="font-medium text-sm">Light Mode</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTheme('dark')}
-                    className={`flex-1 p-4 rounded-xl border flex flex-col items-center gap-2 transition-all duration-300 ${theme === 'dark'
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-white shadow-md'
-                      : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400'
-                      }`}
-                  >
-                    <Moon size={24} className={theme === 'dark' ? 'fill-current' : ''} />
-                    <span className="font-medium text-sm">Dark Mode</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-full h-px bg-gray-200 dark:bg-white/10 my-2"></div>
-
-              <div className="space-y-4">
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Security</p>
-
-                <Input
-                  label="Current Password"
-                  variant="bordered"
-                  endContent={
-                    <button className="focus:outline-none" type="button" onClick={() => toggleVisibility(setIsVisibleCurrent)}>
-                      {isVisibleCurrent ? <EyeOff className="text-2xl text-default-400 pointer-events-none" /> : <Eye className="text-2xl text-default-400 pointer-events-none" />}
-                    </button>
+            <ModalBody className="py-6">
+              <Tabs
+                aria-label="Options"
+                color="secondary"
+                variant="bordered"
+                selectedKey={selectedTab}
+                onSelectionChange={setSelectedTab}
+                classNames={{
+                  tabList: "w-full flex",
+                  tab: "flex-1",
+                }}
+              >
+                <Tab
+                  key="photo"
+                  title={
+                    <div className="flex items-center space-x-2">
+                      <Camera size={16} /> <span>Profile Photo</span>
+                    </div>
                   }
-                  type={isVisibleCurrent ? "text" : "password"}
-                  value={currentPassword}
-                  onValueChange={setCurrentPassword}
-                  startContent={<Lock className="text-gray-400" size={20} />}
-                  classNames={inputClassNames}
-                />
-
-                <Input
-                  label="New Password"
-                  variant="bordered"
-                  endContent={
-                    <button className="focus:outline-none" type="button" onClick={() => toggleVisibility(setIsVisibleNew)}>
-                      {isVisibleNew ? <EyeOff className="text-2xl text-default-400 pointer-events-none" /> : <Eye className="text-2xl text-default-400 pointer-events-none" />}
-                    </button>
-                  }
-                  type={isVisibleNew ? "text" : "password"}
-                  value={newPassword}
-                  onValueChange={setNewPassword}
-                  startContent={<Lock className="text-gray-400" size={20} />}
-                  classNames={inputClassNames}
-                />
-
-                <Input
-                  label="Confirm New Password"
-                  variant="bordered"
-                  color={rePassword && newPassword !== rePassword ? "danger" : "default"}
-                  errorMessage={rePassword && newPassword !== rePassword ? "Passwords do not match" : ""}
-                  endContent={
-                    <button className="focus:outline-none" type="button" onClick={() => toggleVisibility(setIsVisibleRe)}>
-                      {isVisibleRe ? <EyeOff className="text-2xl text-default-400 pointer-events-none" /> : <Eye className="text-2xl text-default-400 pointer-events-none" />}
-                    </button>
-                  }
-                  type={isVisibleRe ? "text" : "password"}
-                  value={rePassword}
-                  onValueChange={setRePassword}
-                  startContent={<Lock className="text-gray-400" size={20} />}
-                  classNames={inputClassNames}
-                />
-
-                <Button
-                  className="w-full bg-gradient-to-tr from-purple-600 to-pink-600 text-white font-bold shadow-lg"
-                  onPress={onSubmitPasswordChange}
-                  isLoading={isPending}
-                  startContent={!isPending && <Save size={18} />}
                 >
-                  Update Password
-                </Button>
-              </div>
+                  <div className="flex flex-col items-center gap-6 py-6 animate-appearance-in">
+                    <div className="relative group p-1.5 bg-gray-50 dark:bg-black/40 rounded-full inline-block shadow-lg border border-gray-200 dark:border-white/10">
+                      <Avatar
+                        src={displayPhoto}
+                        className="w-32 h-32 text-large border-4 border-white dark:border-[#18181b] transition-all"
+                        isBordered
+                      />
+                      <div
+                        onClick={() => fileInputRef.current.click()}
+                        className="absolute inset-1.5 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all text-white backdrop-blur-sm"
+                      >
+                        <Camera size={32} />
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleImageSelect}
+                      accept="image/*"
+                    />
 
-              <div className="w-full h-px bg-gray-200 dark:bg-white/10 my-2"></div>
+                    <Button
+                      color="secondary"
+                      isDisabled={!imageFile}
+                      isLoading={isUploading}
+                      onPress={() => updatePhoto()}
+                      className="font-bold w-full max-w-xs shadow-md shadow-purple-500/20"
+                    >
+                      Save New Photo
+                    </Button>
+                  </div>
+                </Tab>
 
-              <div className="space-y-2">
-                <p className="text-red-500 text-sm font-semibold uppercase tracking-wider">Log Out Zone</p>
-                <Button
-                  color="danger"
-                  variant="flat"
-                  className="w-full font-bold"
-                  startContent={<LogOut size={18} />}
-                  onPress={handleLogout}
+                <Tab
+                  key="security"
+                  title={
+                    <div className="flex items-center space-x-2">
+                      <Lock size={16} /> <span>Security</span>
+                    </div>
+                  }
                 >
-                  Log Out
-                </Button>
-              </div>
+                  <div className="flex flex-col gap-4 py-4 animate-appearance-in">
+                    <Input
+                      label="Current Password"
+                      type="password"
+                      variant="faded"
+                      value={passwords.current}
+                      onValueChange={(v) =>
+                        setPasswords({ ...passwords, current: v })
+                      }
+                      classNames={{
+                        inputWrapper:
+                          "bg-white/60 dark:bg-black/40 border-none shadow-inner",
+                      }}
+                    />
+                    <Input
+                      label="New Password"
+                      type="password"
+                      variant="faded"
+                      value={passwords.new}
+                      onValueChange={(v) =>
+                        setPasswords({ ...passwords, new: v })
+                      }
+                      classNames={{
+                        inputWrapper:
+                          "bg-white/60 dark:bg-black/40 border-none shadow-inner",
+                      }}
+                    />
+                    <Input
+                      label="Confirm New Password"
+                      type="password"
+                      variant="faded"
+                      value={passwords.reNew}
+                      onValueChange={(v) =>
+                        setPasswords({ ...passwords, reNew: v })
+                      }
+                      classNames={{
+                        inputWrapper:
+                          "bg-white/60 dark:bg-black/40 border-none shadow-inner",
+                      }}
+                      isInvalid={
+                        passwords.new !== passwords.reNew &&
+                        passwords.reNew.length > 0
+                      }
+                      errorMessage={
+                        passwords.new !== passwords.reNew &&
+                        passwords.reNew.length > 0
+                          ? "Passwords don't match"
+                          : ""
+                      }
+                    />
 
+                    <Button
+                      color="secondary"
+                      className="mt-4 font-bold shadow-md shadow-purple-500/20"
+                      isLoading={isChangingPass}
+                      isDisabled={
+                        !passwords.current ||
+                        !passwords.new ||
+                        !passwords.reNew ||
+                        passwords.new !== passwords.reNew
+                      }
+                      onPress={handlePasswordSubmit}
+                    >
+                      Update Password
+                    </Button>
+                  </div>
+                </Tab>
+              </Tabs>
             </ModalBody>
 
-            <ModalFooter>
-              <Button variant="light" onPress={onClose} className="font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-300 dark:hover:bg-white/5">
-                Close
+            <ModalFooter className="justify-between">
+              <Button
+                color="danger"
+                variant="light"
+                startContent={<LogOut size={18} />}
+                onPress={handleLogout}
+                className="font-bold hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                Log Out
+              </Button>
+              <Button
+                color="default"
+                variant="flat"
+                onPress={close}
+                className="font-bold"
+              >
+                Cancel
               </Button>
             </ModalFooter>
           </>

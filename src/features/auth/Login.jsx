@@ -11,7 +11,10 @@ import { useMutation } from "@tanstack/react-query";
 import { signinUser } from "../../services/authAPI";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -20,7 +23,6 @@ export default function Login() {
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const navigate = useNavigate();
-
   const { saveUserData } = useContext(AuthContext);
 
   const {
@@ -30,63 +32,70 @@ export default function Login() {
     formState: { errors },
   } = useForm({
     mode: "onTouched",
-    resolver: zodResolver(loginSchema)
+    resolver: zodResolver(loginSchema),
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: signinUser,
 
-    onSuccess: (data) => {
-      localStorage.setItem("userToken", data.token);
+    onSuccess: (res) => {
+      console.log("✅ Full API Response:", res);
 
-      saveUserData();
+      if (res.success === true) {
+        const token = res.data.token;
+        const userDetails = res.data.user;
 
-      toast.success(`Hello there! 🚀`, {
-        duration: 3000,
-        style: {
-          backgroundImage: 'linear-gradient(to right, #9333ea, #db2777)',
-          color: '#fff',
-          fontWeight: 'bold',
-          border: '1px solid rgba(255,255,255,0.2)',
-        },
-        iconTheme: { primary: '#fff', secondary: '#9333ea' }
-      });
+        if (token) {
+          localStorage.setItem("userToken", token);
+          saveUserData();
 
-      navigate("/");
+          if (userDetails?.name) {
+            localStorage.setItem("userName", userDetails.name);
+          }
+
+          saveUserData();
+
+          toast.success(`Welcome back, ${userDetails?.name || "Hero"}! 🚀`);
+
+          const username = userDetails?.name || "user";
+          const slug = username.replace(/\s+/g, "").toLowerCase();
+          navigate(`/feed/${slug}`);
+        } else {
+          toast.error("Login succeeded but no token found ⚠️");
+        }
+      } else {
+        toast.error(res.message || "Failed to login");
+      }
     },
 
     onError: (error) => {
-      const errorMsg = error.response?.data?.message || "Invalid email or password";
+      console.error("Login Error:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Invalid email or password";
       toast.error(errorMsg + " ❌");
       setError("root", { message: errorMsg });
-    }
+    },
   });
 
   const onSubmit = (data) => {
-    toast.loading("Signing in...", {
-      duration: 2000,
-      style: {
-        backgroundImage: 'linear-gradient(to right, #9333ea, #db2777)',
-        color: '#fff',
-        fontWeight: 'bold',
-        border: '1px solid rgba(255,255,255,0.2)',
-      },
-      iconTheme: { primary: '#fff', secondary: '#9333ea' }
-    });
     mutate(data);
   };
 
   return (
     <Card className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-
       <CardHeader className="flex flex-col gap-1 items-center justify-center pt-8 pb-4">
-        <h1 className="text-3xl font-bold text-white tracking-wider">Welcome Back 👋</h1>
-        <p className="text-gray-400 text-sm">Please enter your details to sign in</p>
+        <h1 className="text-3xl font-bold text-white tracking-wider">
+          Welcome Back 👋
+        </h1>
+        <p className="text-gray-400 text-sm">
+          Please enter your details to sign in
+        </p>
       </CardHeader>
 
       <CardBody className="px-8 pb-8">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-
           {errors.root && (
             <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded-lg text-sm text-center font-medium animate-pulse">
               {errors.root.message}
@@ -101,9 +110,12 @@ export default function Login() {
             label="Email Address"
             placeholder="john@example.com"
             variant="bordered"
-            startContent={<Mail className="text-gray-400 pointer-events-none" size={20} />}
+            startContent={
+              <Mail className="text-gray-400 pointer-events-none" size={20} />
+            }
             classNames={{
-              inputWrapper: "border-white/20 hover:border-white/40 focus-within:!border-purple-500",
+              inputWrapper:
+                "border-white/20 hover:border-white/40 focus-within:!border-purple-500",
               input: "text-white",
               label: "text-gray-300",
             }}
@@ -117,22 +129,37 @@ export default function Login() {
               label="Password"
               variant="bordered"
               placeholder="********"
-              startContent={<Lock className="text-gray-400 pointer-events-none" size={20} />}
+              startContent={
+                <Lock className="text-gray-400 pointer-events-none" size={20} />
+              }
               endContent={
-                <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
-                  {isVisible ? <EyeOff className="text-2xl text-gray-400 pointer-events-none" /> : <Eye className="text-2xl text-gray-400 pointer-events-none" />}
+                <button
+                  className="focus:outline-none"
+                  type="button"
+                  onClick={toggleVisibility}
+                >
+                  {isVisible ? (
+                    <EyeOff className="text-2xl text-gray-400 pointer-events-none" />
+                  ) : (
+                    <Eye className="text-2xl text-gray-400 pointer-events-none" />
+                  )}
                 </button>
               }
               type={isVisible ? "text" : "password"}
               classNames={{
-                inputWrapper: "border-white/20 hover:border-white/40 focus-within:!border-purple-500",
+                inputWrapper:
+                  "border-white/20 hover:border-white/40 focus-within:!border-purple-500",
                 input: "text-white",
                 label: "text-gray-300",
               }}
             />
 
             <div className="flex justify-end">
-              <Link href="#" size="sm" className="text-purple-300 hover:text-white transition-colors">
+              <Link
+                href="#"
+                size="sm"
+                className="text-purple-300 hover:text-white transition-colors"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -141,7 +168,7 @@ export default function Login() {
           <Button
             type="submit"
             isLoading={isPending}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-900/20"
+            className="w-full bg-linear-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-purple-900/20"
             size="lg"
           >
             {isPending ? "Signing in..." : "Log In"}
@@ -149,11 +176,14 @@ export default function Login() {
 
           <div className="flex justify-center gap-2 mt-4 text-sm text-gray-400">
             <span>Don't have an account?</span>
-            <Link as={RouterLink} to="/register" className="text-pink-400 font-semibold cursor-pointer">
+            <Link
+              as={RouterLink}
+              to="/register"
+              className="text-pink-400 font-semibold cursor-pointer"
+            >
               Sign up
             </Link>
           </div>
-
         </form>
       </CardBody>
     </Card>

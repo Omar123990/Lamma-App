@@ -1,277 +1,251 @@
-import { useContext, useState, useEffect, useRef } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-    Card, CardHeader, CardBody, CardFooter, Avatar, Image, Button,
-    Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
-    useDisclosure, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-    Textarea
+  Card,
+  CardFooter,
+  useDisclosure,
+  Modal,
+  ModalContent,
+  ModalBody,
 } from "@heroui/react";
-import { Heart, MessageCircle, Share2, MoreVertical, Edit2, Trash2, AlertTriangle, Check, X, Image as ImageIcon, XCircle } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { AuthContext } from "../../context/AuthContext";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deletePost, updatePost } from "../../services/postsAPI";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  deletePost,
+  updatePost,
+  toggleLike,
+  toggleFollowUser,
+  toggleSavePost,
+} from "../../services/postsAPI";
+import { getCurrentUser } from "../../services/authAPI";
 import toast from "react-hot-toast";
+import PostHeader from "./card/PostHeader";
+import PostBody from "./card/PostBody";
+import PostActions from "./card/PostActions";
+import { DeletePostModal, EditPostModal } from "./card/PostModals";
 import CommentPreview from "./comments/CommentPreview";
 
 export default function PostCard({ post, disableModal = false }) {
-    const { userData } = useContext(AuthContext);
-    const location = useLocation();
-    const queryClient = useQueryClient();
-    const [_, setSearchParams] = useSearchParams();
+  const { userData: contextUser, userToken } = useContext(AuthContext);
+  const queryClient = useQueryClient();
+  const [, setSearchParams] = useSearchParams();
 
-    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onOpenChange: onDeleteOpenChange } = useDisclosure();
-    const { isOpen: isEditOpen, onOpen: onEditOpen, onOpenChange: onEditOpenChange } = useDisclosure();
+  const deleteModal = useDisclosure();
+  const editModal = useDisclosure();
+  const imageModal = useDisclosure();
 
-    if (!post) return null;
-    const { user, body, image, createdAt, _id } = post;
+  const { data: apiUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+    enabled: !!userToken,
+  });
 
-    const isOwner = userData?._id === user?._id;
+  const fullUserData = apiUser || contextUser;
 
-    const [editContent, setEditContent] = useState(body);
-    const [editImage, setEditImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(image);
-    const fileInputRef = useRef(null);
+  if (!post) return null;
 
-    useEffect(() => {
-        setEditContent(body);
-        setPreviewImage(image);
-    }, [body, image]);
+  const { user, body, createdAt, _id, likes } = post;
 
-    const authorPhoto = (user?.photo && !user.photo.includes("undefined"))
-        ? user.photo
-        : "https://linked-posts.routemisr.com/uploads/default-profile.png";
-
-    const handleOpenPost = () => {
-        if (disableModal) return;
-        setSearchParams({ postId: _id });
-    };
-
-    const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setEditImage(file);
-            setPreviewImage(URL.createObjectURL(file));
-        }
-    };
-
-    const removeSelectedImage = () => {
-        setEditImage(null);
-        setPreviewImage(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-    };
-
-    const { mutate: handleDelete, isPending: isDeleting } = useMutation({
-        mutationFn: () => deletePost(_id),
-        onSuccess: () => {
-            toast.success("Post deleted 🗑️");
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-            queryClient.invalidateQueries({ queryKey: ['userPosts'] });
-            onDeleteOpenChange(false);
-        },
-        onError: () => toast.error("Failed to delete")
-    });
-
-    const { mutate: handleEdit, isPending: isEditing } = useMutation({
-        mutationFn: () => {
-            const formData = new FormData();
-            formData.append("body", editContent);
-            if (editImage) {
-                formData.append("image", editImage);
-            }
-            return updatePost({ postId: _id, formData });
-        },
-        onSuccess: () => {
-            toast.success("Post updated ✨");
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-            queryClient.invalidateQueries({ queryKey: ['userPosts'] });
-            onEditOpenChange(false);
-        },
-        onError: (err) => {
-            console.error(err);
-            toast.error("Failed to update post");
-        }
-    });
-
-    return (
-        <Card className={`
-            w-full mb-6 
-            bg-white/10 dark:bg-black/10
-            backdrop-blur-md 
-            border border-white/40 dark:border-white/10 
-            shadow-lg hover:shadow-xl
-            transition-all duration-300
-            hover:bg-white/20 dark:hover:bg-black/20
-            ${disableModal ? 'cursor-pointer' : ''}
-            ${isEditing ? 'opacity-50 pointer-events-none' : ''}
-            ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
-        `}>
-
-            <CardHeader className="justify-between px-4 pt-4">
-                <div className="flex gap-3">
-                    <Avatar isBordered radius="full" size="md" src={authorPhoto} className="ring-2 ring-purple-500/30" />
-                    <div className="flex flex-col gap-0.5 items-start justify-center">
-                        <h4 className="text-sm font-bold text-gray-800 dark:text-gray-100">{user?.name || "Anonymous"}</h4>
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                            {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-                        </span>
-                    </div>
-                </div>
-
-                {isOwner && (
-                    <Dropdown className="bg-white/80 dark:bg-[#27272a] backdrop-blur-md border border-gray-200 dark:border-white/10">
-                        <DropdownTrigger>
-                            <Button isIconOnly size="sm" variant="light" className="text-gray-500 hover:bg-black/5 dark:hover:bg-white/10 rounded-full">
-                                <MoreVertical size={20} />
-                            </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu aria-label="Post Actions" variant="flat">
-                            <DropdownItem key="edit" startContent={<Edit2 size={16} />} onPress={onEditOpen}>Edit Post</DropdownItem>
-                            <DropdownItem key="delete" className="text-danger" color="danger" startContent={<Trash2 size={16} />} onPress={onDeleteOpen}>Delete Post</DropdownItem>
-                        </DropdownMenu>
-                    </Dropdown>
-                )}
-            </CardHeader>
-
-            <CardBody className="px-4 py-2">
-                <div onClick={handleOpenPost} className="cursor-pointer">
-                    <p className="mb-3 whitespace-pre-wrap dir-auto text-gray-800 dark:text-gray-200 text-sm leading-relaxed">{body}</p>
-                    {image && (
-                        <Image
-                            alt="Post image"
-                            className="object-cover rounded-2xl w-full max-h-[500px] border border-black/5 dark:border-white/10"
-                            src={image}
-                            width="100%"
-                        />
-                    )}
-                </div>
-            </CardBody>
-
-            <CardFooter className="gap-3 px-4 pb-4 pt-2 flex flex-col items-stretch">
-                <div className="flex gap-6 justify-around w-full pt-3 border-t border-gray-200/50 dark:border-white/10">
-                    <button className="flex cursor-pointer gap-1.5 text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400 transition-colors items-center group">
-                        <Heart size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-semibold">Like</span>
-                    </button>
-                    <button onClick={handleOpenPost} className="flex cursor-pointer gap-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors items-center group">
-                        <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-semibold">Comment</span>
-                    </button>
-                    <button className="flex gap-1.5 text-gray-500 dark:text-gray-400 cursor-pointer hover:text-green-500 dark:hover:text-green-400 transition-colors items-center group">
-                        <Share2 size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-semibold">Share</span>
-                    </button>
-                </div>
-                {!disableModal && <CommentPreview postId={_id} onClick={handleOpenPost} />}
-            </CardFooter>
-
-            <Modal isOpen={isDeleteOpen} onOpenChange={onDeleteOpenChange} backdrop="blur"
-                classNames={{
-                    base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-black dark:text-white"
-                }}>
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1 items-center pt-8">
-                                <div className="p-3 rounded-full bg-red-500/10 text-red-500 mb-2"><AlertTriangle size={32} /></div>
-                                <span className="text-xl font-bold">Delete Post?</span>
-                            </ModalHeader>
-                            <ModalBody className="text-center text-gray-500 dark:text-gray-400">
-                                <p>Are you sure you want to delete this post?</p>
-                            </ModalBody>
-                            <ModalFooter className="justify-center pb-8 pt-4">
-                                <Button variant="light" onPress={onClose}>Cancel</Button>
-                                <Button color="danger" onPress={() => handleDelete()} isLoading={isDeleting}>Delete</Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-
-            <Modal isOpen={isEditOpen} onOpenChange={onEditOpenChange} backdrop="blur" size="2xl"
-                classNames={{
-                    base: "bg-white dark:bg-[#18181b] border border-gray-200 dark:border-white/10 text-black dark:text-white",
-                    closeButton: "hover:bg-gray-100 dark:hover:bg-white/10"
-                }}>
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex gap-2 items-center border-b border-gray-200 dark:border-white/10 pb-4">
-                                <Edit2 size={20} className="text-blue-500" />
-                                <span className="text-xl font-bold">Edit Post</span>
-                            </ModalHeader>
-                            <ModalBody className="py-6">
-                                <Textarea
-                                    autoFocus
-                                    label="Content"
-                                    placeholder="What's on your mind?"
-                                    variant="bordered"
-                                    value={editContent}
-                                    onValueChange={setEditContent}
-                                    minRows={3}
-                                    classNames={{
-                                        input: "text-gray-800 dark:text-white text-lg",
-                                        inputWrapper: "border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/40 focus-within:!border-blue-500"
-                                    }}
-                                />
-
-                                <div className="mt-4">
-                                    <input
-                                        type="file"
-                                        hidden
-                                        ref={fileInputRef}
-                                        onChange={handleImageSelect}
-                                        accept="image/*"
-                                    />
-
-                                    {previewImage ? (
-                                        <div className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-white/10">
-                                            <img src={previewImage} alt="Preview" className="w-full max-h-60 object-cover" />
-                                            <button
-                                                onClick={removeSelectedImage}
-                                                className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                            <div className="absolute bottom-2 right-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="flat"
-                                                    className="bg-black/60 text-white backdrop-blur-md"
-                                                    startContent={<ImageIcon size={16} />}
-                                                    onPress={() => fileInputRef.current.click()}
-                                                >
-                                                    Change
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <Button
-                                            variant="flat"
-                                            className="w-full h-16 border-2 border-dashed border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-gray-500"
-                                            startContent={<ImageIcon size={24} />}
-                                            onPress={() => fileInputRef.current.click()}
-                                        >
-                                            Add Photo
-                                        </Button>
-                                    )}
-                                </div>
-                            </ModalBody>
-                            <ModalFooter className="border-t border-gray-200 dark:border-white/10 pt-4">
-                                <Button color="danger" variant="light" onPress={onClose} startContent={<XCircle size={18} />}>Cancel</Button>
-                                <Button
-                                    className="bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20"
-                                    onPress={() => handleEdit()}
-                                    isLoading={isEditing}
-                                    startContent={!isEditing && <Check size={18} />}
-                                >
-                                    Save Changes
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </Card>
+  const isLiked =
+    fullUserData &&
+    likes?.some(
+      (id) => id === fullUserData._id || id?._id === fullUserData._id,
     );
+  const isOwner = fullUserData?._id === user?._id;
+
+  const actualIsFollowing =
+    fullUserData?.following?.some(
+      (f) => f === user?._id || f?._id === user?._id,
+    ) || false;
+
+  const actualIsSaved =
+    fullUserData?.bookmarks?.some((b) => b === _id || b?._id === _id) || false;
+
+  const [optimisticFollow, setOptimisticFollow] = useState(null);
+  const [optimisticSave, setOptimisticSave] = useState(null);
+
+  const isFollowingLocal =
+    optimisticFollow !== null ? optimisticFollow : actualIsFollowing;
+  const isSavedLocal = optimisticSave !== null ? optimisticSave : actualIsSaved;
+
+  let postImage = post.image || post.imgUrl || post.cover || post.photo || null;
+  if (postImage && !postImage.startsWith("http"))
+    postImage = `https://linked-posts.routemisr.com/${postImage}`;
+
+  const [editContent, setEditContent] = useState(body);
+  const [editImage, setEditImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(postImage);
+  const [prevBody, setPrevBody] = useState(body);
+
+  if (body !== prevBody) {
+    setPrevBody(body);
+    setEditContent(body);
+    setPreviewImage(postImage);
+  }
+
+  const handleOpenPost = () => {
+    if (!disableModal) setSearchParams({ postId: _id });
+  };
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    imageModal.onOpen();
+  };
+
+  const { mutate: handleDelete, isPending: isDeleting } = useMutation({
+    mutationFn: () => deletePost(_id),
+    onSuccess: () => {
+      toast.success("Deleted 🗑️");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      deleteModal.onOpenChange(false);
+    },
+  });
+
+  const { mutate: handleEdit, isPending: isEditing } = useMutation({
+    mutationFn: () => {
+      const formData = new FormData();
+      formData.append("body", editContent);
+      if (editImage) formData.append("image", editImage);
+      return updatePost({ postId: _id, formData });
+    },
+    onSuccess: () => {
+      toast.success("Updated ✨");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      editModal.onOpenChange(false);
+    },
+  });
+
+  const { mutate: handleLikeMutation, isPending: isLiking } = useMutation({
+    mutationFn: () => toggleLike(_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+  });
+
+  const { mutate: handleFollow, isPending: isFollowingPending } = useMutation({
+    mutationFn: () => toggleFollowUser(user?._id),
+    onMutate: () => {
+      setOptimisticFollow(!isFollowingLocal);
+    },
+    onSuccess: () => {
+      setOptimisticFollow(null);
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      toast.success(
+        !isActuallyFollowing ? "Followed successfully! 🤝" : "Unfollowed",
+      );
+    },
+    onError: () => {
+      setOptimisticFollow(null);
+      toast.error("Failed to update follow status");
+    },
+  });
+
+  const { mutate: handleSave, isPending: isSavingPending } = useMutation({
+    mutationFn: () => toggleSavePost(_id),
+    onMutate: () => {
+      setOptimisticSave(!isSavedLocal);
+    },
+    onSuccess: () => {
+      setOptimisticSave(null);
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["savedPosts"] });
+      toast.success(
+        !actualIsSaved ? "Post Saved! 🔖" : "Removed from bookmarks",
+      );
+    },
+    onError: () => {
+      setOptimisticSave(null);
+      toast.error("Failed to save post");
+    },
+  });
+
+  return (
+    <>
+      <Card
+        className={`w-full mb-6 bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-white/20 dark:hover:bg-black/20 ${disableModal ? "cursor-pointer" : ""} ${isEditing || isDeleting ? "opacity-50 pointer-events-none" : ""}`}
+      >
+        <PostHeader
+          user={user}
+          createdAt={createdAt}
+          isOwner={isOwner}
+          onEdit={editModal.onOpen}
+          onDelete={deleteModal.onOpen}
+          onFollow={handleFollow}
+          isFollowing={isFollowingLocal}
+          isFollowingPending={isFollowingPending}
+          onSave={handleSave}
+          isSaved={isSavedLocal}
+          isSavingPending={isSavingPending}
+        />
+
+        <PostBody
+          body={body}
+          postImage={postImage}
+          onOpenPost={handleOpenPost}
+          onImageClick={handleImageClick}
+        />
+
+        <CardFooter className="gap-3 px-4 pb-4 pt-2 flex flex-col items-stretch">
+          <PostActions
+            likes={likes}
+            isLiked={isLiked}
+            isLiking={isLiking}
+            onLike={handleLikeMutation}
+            onComment={handleOpenPost}
+            postId={_id}
+            userName={user?.name}
+            postBody={body}
+          />
+          {!disableModal && (
+            <CommentPreview postId={_id} onClick={handleOpenPost} />
+          )}
+        </CardFooter>
+      </Card>
+
+      <Modal
+        isOpen={imageModal.isOpen}
+        onOpenChange={imageModal.onOpenChange}
+        size="4xl"
+        backdrop="blur"
+        classNames={{
+          base: "bg-transparent shadow-none",
+          closeButton:
+            "top-0 right-0 z-50 text-white bg-black/50 hover:bg-black rounded-full m-2",
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <ModalBody className="p-0 flex justify-center items-center overflow-hidden">
+              <img
+                src={postImage}
+                alt="Post Attachment"
+                className="max-w-full max-h-[90vh] object-contain rounded-xl cursor-zoom-out"
+                onClick={onClose}
+              />
+            </ModalBody>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <DeletePostModal
+        isOpen={deleteModal.isOpen}
+        onOpenChange={deleteModal.onOpenChange}
+        onDelete={handleDelete}
+        isDeleting={isDeleting}
+      />
+      <EditPostModal
+        isOpen={editModal.isOpen}
+        onOpenChange={editModal.onOpenChange}
+        onEdit={handleEdit}
+        isEditing={isEditing}
+        editContent={editContent}
+        setEditContent={setEditContent}
+        editImage={editImage}
+        setEditImage={setEditImage}
+        previewImage={previewImage}
+        setPreviewImage={setPreviewImage}
+      />
+    </>
+  );
 }

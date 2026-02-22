@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
@@ -8,17 +8,20 @@ export default function AuthContextProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  function logout() {
+  const logout = useCallback(() => {
     localStorage.removeItem("userToken");
+    localStorage.removeItem("userName");
     setUserToken(null);
     setUserData(null);
-  }
+  }, []);
 
-  const saveUserData = () => {
+  const saveUserData = useCallback(() => {
     const encodedToken = localStorage.getItem("userToken");
+    const storedName = localStorage.getItem("userName");
 
     if (!encodedToken) {
-      logout();
+      setUserToken(null);
+      setUserData(null);
       return;
     }
 
@@ -26,43 +29,46 @@ export default function AuthContextProvider({ children }) {
       const decoded = jwtDecode(encodedToken);
 
       const normalizedUser = {
-        _id: decoded.user || decoded.id || decoded.userId || decoded._id,
-        name: decoded.name || null
+        _id: decoded.user || decoded.userId || decoded._id || decoded.uid,
+        name: storedName || decoded.name || decoded.username || "User",
+        email: decoded.email,
+        role: decoded.role,
       };
 
-      if (!normalizedUser._id) {
-        console.error("❌ Token invalid. Logging out...");
-        logout();
-        return;
-      }
+      setUserData((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(normalizedUser))
+          return prev;
+        return normalizedUser;
+      });
 
-      console.log("✅ User Connected:", normalizedUser);
-      setUserData(normalizedUser);
       setUserToken(encodedToken);
-
     } catch (error) {
       console.error("❌ Token Error:", error);
-      logout();
+      localStorage.removeItem("userToken");
+      setUserToken(null);
+      setUserData(null);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (localStorage.getItem("userToken")) {
       saveUserData();
     }
     setIsAuthReady(true);
-  }, []);
+  }, [saveUserData]);
 
   return (
-    <AuthContext.Provider value={{
-      userToken,
-      setUserToken,
-      userData,
-      setUserData,
-      saveUserData,
-      isAuthReady,
-      logout,
-    }}>
+    <AuthContext.Provider
+      value={{
+        userToken,
+        setUserToken,
+        userData,
+        setUserData,
+        saveUserData,
+        isAuthReady,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

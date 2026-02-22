@@ -1,20 +1,43 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Textarea } from "@heroui/react";
-import { useState, useEffect, useRef } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Textarea,
+} from "@heroui/react";
+import { useState, useRef } from "react";
+import { Image as ImageIcon, X } from "lucide-react";
 
-export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) => {
+export const EditModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  post,
+  isProcessing,
+}) => {
   const [body, setBody] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (post) {
+  // ✅ الحل الرسمي من React: (Derived State) بدل الـ useEffect
+  // بنعمل State تحفظ حالة المودال القديمة، ولو اتغيرت نحدث البيانات فوراً
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  const [prevPostId, setPrevPostId] = useState(null);
+
+  if (isOpen !== prevIsOpen || post?._id !== prevPostId) {
+    setPrevIsOpen(isOpen);
+    setPrevPostId(post?._id);
+
+    // لو المودال لسه فاتح، حط بيانات البوست في حقول الإدخال
+    if (isOpen && post) {
       setBody(post.body || "");
       setImagePreview(post.image || null);
       setSelectedImage(null);
     }
-  }, [post, isOpen]);
+  }
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
@@ -56,24 +79,35 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
             variant="bordered"
             classNames={{
               input: "text-white",
-              inputWrapper: "border-white/20 hover:border-white/40 focus:border-purple-500"
+              inputWrapper:
+                "border-white/20 hover:border-white/40 focus:border-purple-500",
             }}
           />
 
           {imagePreview && (
-            <div className="relative mt-2 group">
+            <div className="relative mt-2">
               <img
                 src={imagePreview}
                 alt="Preview"
                 className="w-full max-h-60 object-cover rounded-xl border border-white/10"
               />
-              <button
-                onClick={() => fileInputRef.current.click()}
-                className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-purple-600 transition opacity-0 group-hover:opacity-100"
-                title="Change Image"
-              >
-                <ImageIcon size={16} />
-              </button>
+
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="bg-black/70 backdrop-blur-md text-white p-2 rounded-full hover:bg-purple-600 transition shadow-lg"
+                  title="Change Image"
+                >
+                  <ImageIcon size={16} />
+                </button>
+                <button
+                  onClick={removeImage}
+                  className="bg-black/70 backdrop-blur-md text-white p-2 rounded-full hover:bg-red-500 transition shadow-lg"
+                  title="Remove Image"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -96,7 +130,6 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
             onChange={handleImageSelect}
             accept="image/*"
           />
-
         </ModalBody>
         <ModalFooter>
           <Button color="danger" variant="light" onPress={onClose}>
@@ -106,7 +139,7 @@ export const EditModal = ({ isOpen, onClose, onConfirm, post, isProcessing }) =>
             color="primary"
             onPress={handleSave}
             isLoading={isProcessing}
-            className="bg-gradient-to-tr from-purple-600 to-pink-600 font-bold"
+            className="bg-linear-to-tr from-purple-600 to-pink-600 font-bold"
           >
             Save Changes
           </Button>
@@ -127,15 +160,24 @@ export const DeleteModal = ({ isOpen, onClose, onConfirm, isProcessing }) => {
       }}
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1 text-red-500">Delete Post</ModalHeader>
+        <ModalHeader className="flex flex-col gap-1 text-red-500">
+          Delete Post
+        </ModalHeader>
         <ModalBody>
-          <p className="text-gray-300">Are you sure you want to delete this post?</p>
+          <p className="text-gray-300">
+            Are you sure you want to delete this post?
+          </p>
         </ModalBody>
         <ModalFooter>
           <Button variant="light" onPress={onClose} className="text-white">
             Cancel
           </Button>
-          <Button color="danger" onPress={onConfirm} isLoading={isProcessing} className="font-bold shadow-lg shadow-red-500/20">
+          <Button
+            color="danger"
+            onPress={onConfirm}
+            isLoading={isProcessing}
+            className="font-bold shadow-lg shadow-red-500/20"
+          >
             Delete
           </Button>
         </ModalFooter>

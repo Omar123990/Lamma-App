@@ -1,30 +1,55 @@
-import { Card, CardBody, CardHeader } from "@heroui/react";
-import { Mail, Calendar, User } from "lucide-react";
+import { Mail, User, Cake } from "lucide-react";
+import { format } from "date-fns";
 
 export default function ProfileAbout({ userInfo }) {
-    return (
-        <Card className="w-full bg-white/5 border border-white/10 backdrop-blur-md p-2">
-            <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
-                <h3 className="text-xl font-bold text-white mb-4">About</h3>
-            </CardHeader>
-            <CardBody className="px-4 pb-4 gap-4">
+  const formatDateSafe = (dateString) => {
+    if (!dateString) return "Not Specified";
+    const date = new Date(dateString);
+    return !isNaN(date.getTime())
+      ? format(date, "MMMM d, yyyy")
+      : "Not Specified";
+  };
 
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400"><Mail size={22} /></div>
-                    <div><p className="text-xs text-gray-400">Email</p><p className="text-white font-medium">{userInfo?.email}</p></div>
-                </div>
+  const details = [
+    {
+      icon: <Mail className="text-blue-500" size={24} />,
+      label: "Email",
+      value: userInfo?.email || "No Email",
+    },
+    {
+      icon: <User className="text-purple-500" size={24} />,
+      label: "Gender",
+      value: userInfo?.gender || "Not Specified",
+    },
+    {
+      icon: <Cake className="text-pink-500" size={24} />,
+      label: "Date of Birth",
+      value: formatDateSafe(userInfo?.dateOfBirth),
+    },
+  ];
 
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400"><Calendar size={22} /></div>
-                    <div><p className="text-xs text-gray-400">Date of Birth</p><p className="text-white font-medium">{userInfo?.dateOfBirth ? userInfo.dateOfBirth.split('T')[0] : "Not specified"}</p></div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-pink-500/10 text-pink-400"><User size={22} /></div>
-                    <div><p className="text-xs text-gray-400">Gender</p><p className="text-white font-medium capitalize">{userInfo?.gender || "Not specified"}</p></div>
-                </div>
-
-            </CardBody>
-        </Card>
-    );
+  return (
+    <div className="bg-white/20 dark:bg-[#0f0f11]/40 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white/40 dark:border-white/10 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {details.map((item, index) => (
+          <div
+            key={index}
+            className="flex flex-col items-center justify-center text-center p-4 rounded-2xl hover:bg-white/30 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-white/40 dark:hover:border-white/10"
+          >
+            <div className="p-3 bg-white/40 dark:bg-black/40 border border-white/30 dark:border-white/5 rounded-full mb-3">
+              {item.icon}
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">
+                {item.label}
+              </p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white break-all">
+                {item.value}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

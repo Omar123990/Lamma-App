@@ -1,137 +1,170 @@
-import { useState, useRef, useContext } from "react";
-import { Avatar, Button, Card, CardBody, Textarea, Spinner } from "@heroui/react";
+import { useState, useRef, useContext, useMemo } from "react";
+import { Avatar, Button, Textarea, Card, CardBody } from "@heroui/react";
 import { Image as ImageIcon, Send, X } from "lucide-react";
-import toast from "react-hot-toast";
-import { AuthContext } from "../../context/AuthContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createNewPost } from "../../services/postsAPI";
+import { createPost } from "../../services/postsAPI";
 import { getCurrentUser } from "../../services/authAPI";
+import { AuthContext } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function CreatePost() {
-
   const { userData: contextUser } = useContext(AuthContext);
-  const [content, setContent] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-
-  const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: apiUser, isLoading: loadingUser } = useQuery({
-    queryKey: ['currentUser'],
+  const { data: apiUser } = useQuery({
+    queryKey: ["currentUser"],
     queryFn: getCurrentUser,
-    staleTime: 1000 * 60 * 10,
+    enabled: !!contextUser,
   });
 
   const currentUser = apiUser || contextUser;
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: createNewPost,
-    onSuccess: () => {
-      toast.success("Post published successfully 🎉");
-      setContent("");
-      removeImage();
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onError: (error) => {
-      const errMsg = error.response?.data?.error || "Failed to publish post";
-      toast.error(errMsg);
-    }
-  });
+  const [body, setBody] = useState("");
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const handleImageSelect = (e) => {
+  const userPhoto = useMemo(() => {
+    if (!currentUser?.photo)
+      return "https://linked-posts.routemisr.com/uploads/default-profile.png";
+
+    let photo = currentUser.photo;
+
+    if (photo.includes("undefined")) {
+      return "https://linked-posts.routemisr.com/uploads/default-profile.png";
+    }
+
+    if (photo.startsWith("http")) {
+      return photo;
+    }
+
+    return `https://linked-posts.routemisr.com/${photo}`;
+  }, [currentUser]);
+
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
     }
   };
 
   const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
+    setImage(null);
+    setPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handlePublish = () => {
-    if (!content.trim() && !selectedImage) return;
-    mutate({ content, image: selectedImage });
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => {
+      const formData = new FormData();
+      formData.append("body", body);
+      if (image) formData.append("image", image);
+      return createPost(formData);
+    },
+    onSuccess: () => {
+      toast.success("Post created! 🎉");
+      setBody("");
+      removeImage();
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: (err) =>
+      toast.error(err.response?.data?.error || "Failed to post"),
+  });
+
+  const handleSubmit = () => {
+    if (!body.trim() && !image) return;
+    mutate();
   };
 
-  const userPhoto = (currentUser?.photo && !currentUser.photo.includes("undefined"))
-    ? currentUser.photo
-    : "https://linked-posts.routemisr.com/uploads/default-profile.png";
-
   return (
-    <Card className="w-full bg-white/5 border border-white/10 backdrop-blur-md mb-6">
-      <CardBody className="gap-4">
+    <Card
+      className="mb-8 w-full overflow-visible 
+        bg-white/10 dark:bg-black/20 
+        backdrop-blur-xl 
+        border border-white/20 dark:border-white/10 
+        shadow-[0_8px_32px_0_rgba(31,38,135,0.15)]
+    "
+    >
+      <CardBody className="p-5">
         <div className="flex gap-4">
-
-          <Avatar
-            src={userPhoto}
-            className="w-12 h-12 flex-shrink-0"
-            isBordered
-            color="secondary"
-          />
-
-          <Textarea
-            placeholder={loadingUser ? "Loading..." : `What's on your mind, ${currentUser?.name?.split(" ")[0] || "User"}?`}
-            minRows={2}
-            value={content}
-            onValueChange={setContent}
-            variant="bordered"
-            classNames={{
-              input: "text-white text-lg",
-              inputWrapper: "border-none shadow-none bg-transparent group-data-[focus=true]:bg-transparent"
-            }}
-          />
-        </div>
-
-        {imagePreview && (
-          <div className="relative mt-2 animate-in fade-in zoom-in duration-300">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-full max-h-80 object-cover rounded-xl border border-white/10"
+          <div className="shrink-0">
+            <Avatar
+              src={userPhoto}
+              size="lg"
+              isBordered
+              color="secondary"
+              className="w-12 h-12"
+              showFallback
+              name={currentUser?.name?.charAt(0) || "U"}
             />
-            <button
-              onClick={removeImage}
-              className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        )}
-
-        <div className="flex justify-between items-center border-t border-white/10 pt-3 mt-2">
-          <div>
-            <input
-              type="file"
-              hidden
-              ref={fileInputRef}
-              onChange={handleImageSelect}
-              accept="image/*"
-            />
-            <Button
-              variant="light"
-              className="text-purple-400 font-bold px-4 hover:text-white transition-colors hover:bg-white/5"
-              startContent={<ImageIcon size={22} />}
-              onPress={() => fileInputRef.current.click()}
-            >
-              Photo
-            </Button>
           </div>
 
-          <Button
-            className="text-white px-8 font-bold bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg shadow-purple-900/20"
-            endContent={!isPending && <Send size={18} />}
-            isLoading={isPending}
-            onPress={handlePublish}
-            isDisabled={(!content.trim() && !selectedImage) || isPending}
-          >
-            {isPending ? "Publishing..." : "Publish"}
-          </Button>
+          <div className="flex-1">
+            <Textarea
+              placeholder={`What's on your mind, ${currentUser?.name?.split(" ")[0] || "Friend"}?`}
+              minRows={2}
+              variant="flat"
+              size="lg"
+              value={body}
+              onValueChange={setBody}
+              classNames={{
+                base: "w-full",
+                input:
+                  "text-lg text-gray-800 dark:text-white placeholder:text-gray-500/70",
+                inputWrapper:
+                  "bg-transparent shadow-none hover:bg-transparent data-[focus=true]:bg-transparent transition-colors",
+              }}
+            />
 
+            {preview && (
+              <div className="relative mt-4 mb-2 w-full max-w-md group">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full max-h-80 rounded-2xl object-cover border border-white/20 shadow-lg"
+                />
+                <button
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-red-500 text-white rounded-full p-1.5 backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200/30 dark:border-white/10">
+              <div className="flex gap-2">
+                <Button
+                  isIconOnly
+                  variant="light"
+                  className="text-green-600 hover:bg-green-500/10 rounded-full"
+                  onPress={() => fileInputRef.current.click()}
+                >
+                  <ImageIcon size={24} />
+                </Button>
+                <input
+                  type="file"
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/*"
+                />
+              </div>
+
+              <Button
+                className="px-8 font-bold bg-linear-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20"
+                radius="full"
+                endContent={!isPending && <Send size={18} />}
+                isLoading={isPending}
+                isDisabled={(!body.trim() && !image) || isPending}
+                onPress={handleSubmit}
+              >
+                {isPending ? "Posting..." : "Post"}
+              </Button>
+            </div>
+          </div>
         </div>
       </CardBody>
     </Card>

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "../../services/authAPI";
 import { getUnreadCount } from "../../services/postsAPI";
 import toast from "react-hot-toast";
+import { Badge } from "@heroui/react";
 
 import NavLinks from "./NavLinks";
 import UserMenu from "./UserMenu";
@@ -127,22 +128,60 @@ export default function Navbar() {
             <NavLinks
               userData={userData}
               location={location}
-              unreadCount={unreadCount}
               scrollToTop={scrollToTop}
             />
           )}
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {userToken ? (
-              <UserMenu
-                userData={userData}
-                userPhoto={userPhoto}
-                unreadCount={unreadCount}
-                resolvedTheme={resolvedTheme}
-                toggleTheme={toggleTheme}
-                handleLogout={handleLogout}
-                navigate={navigate}
-              />
+              <>
+                <Link
+                  to="/notifications"
+                  className={`p-2 rounded-full transition-colors flex items-center justify-center ${
+                    location.pathname === "/notifications"
+                      ? "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                  }`}
+                >
+                  {unreadCount > 0 ? (
+                    <Badge
+                      content={unreadCount}
+                      color="danger"
+                      size="sm"
+                      shape="circle"
+                      showOutline={false}
+                      className="text-[10px] font-bold text-white border-none"
+                    >
+                      <Bell
+                        size={20}
+                        className={
+                          location.pathname === "/notifications"
+                            ? "fill-purple-600/20"
+                            : ""
+                        }
+                      />
+                    </Badge>
+                  ) : (
+                    <Bell
+                      size={20}
+                      className={
+                        location.pathname === "/notifications"
+                          ? "fill-purple-600/20"
+                          : ""
+                      }
+                    />
+                  )}
+                </Link>
+
+                <UserMenu
+                  userData={userData}
+                  userPhoto={userPhoto}
+                  resolvedTheme={resolvedTheme}
+                  toggleTheme={toggleTheme}
+                  handleLogout={handleLogout}
+                  navigate={navigate}
+                />
+              </>
             ) : (
               <div className="flex gap-2">
                 <button

@@ -12,13 +12,18 @@ import Notifications from "../pages/Notifications";
 
 import ProtectedRoute from "./ProtectedRoute";
 import { AuthContext } from "../context/AuthContext";
+import NotFound from "../pages/NotFound";
 
 const RedirectToUserFeed = () => {
-  const { userData } = useContext(AuthContext);
+  const context = useContext(AuthContext);
 
-  if (userData === null) return null;
+  if (!context) return null;
 
-  if (userData.name) {
+  const { userData } = context;
+
+  if (!userData) return null;
+
+  if (userData?.name) {
     const slug = userData.name.replace(/\s+/g, "").toLowerCase();
     return <Navigate to={`/feed/${slug}`} replace />;
   }
@@ -54,6 +59,10 @@ const router = createBrowserRouter([
             path: "notifications",
             element: <Notifications />,
           },
+          {
+            path: "*",
+            element: <NotFound />,
+          },
         ],
       },
     ],
@@ -65,6 +74,11 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
     ],
+  },
+
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ]);
 

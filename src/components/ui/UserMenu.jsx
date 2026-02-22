@@ -1,4 +1,5 @@
-import { Sun, Moon, LogOut, Menu } from "lucide-react";
+import { Sun, Moon, LogOut, Menu, Home, User, Bookmark } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import {
   Avatar,
   Dropdown,
@@ -14,7 +15,15 @@ export default function UserMenu({
   resolvedTheme,
   toggleTheme,
   handleLogout,
+  navigate,
 }) {
+  const location = useLocation();
+
+  const isInProfile = location.pathname.includes("/profile");
+  const isHome =
+    location.pathname === "/" || location.pathname.includes("/feed");
+  const isSaved = location.pathname === "/saved";
+
   return (
     <Dropdown placement="bottom-end" backdrop="blur">
       <DropdownTrigger>
@@ -52,6 +61,41 @@ export default function UserMenu({
               {userData?.email}
             </p>
           </DropdownItem>
+        </DropdownSection>
+
+        <DropdownSection showDivider className="sm:hidden">
+          {!isHome && (
+            <DropdownItem
+              key="home"
+              startContent={<Home size={18} />}
+              onPress={() => navigate("/")}
+              textValue="Home"
+            >
+              Home
+            </DropdownItem>
+          )}
+
+          {!isInProfile && (
+            <DropdownItem
+              key="profile"
+              startContent={<User size={18} />}
+              onPress={() => navigate(`/profile/${userData?._id}`)}
+              textValue="Profile"
+            >
+              Profile
+            </DropdownItem>
+          )}
+
+          {!isSaved && (
+            <DropdownItem
+              key="saved"
+              startContent={<Bookmark size={18} />}
+              onPress={() => navigate("/saved")}
+              textValue="Saved"
+            >
+              Saved
+            </DropdownItem>
+          )}
         </DropdownSection>
 
         <DropdownSection showDivider>

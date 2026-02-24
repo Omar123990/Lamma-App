@@ -200,7 +200,6 @@ export const getCommentReplies = async (postId, commentId) => {
   }
 };
 
-// 4. Follow & Bookmark 
 export const toggleFollowUser = async (userIdToFollow) => {
   const { data } = await axios.put(
     `https://route-posts.routemisr.com/users/${userIdToFollow}/follow`,
@@ -254,7 +253,6 @@ export const getSavedPosts = async () => {
   }
 };
 
-// 5. Notifications
 export const getNotifications = async () => {
   try {
     const { data } = await axios.get(

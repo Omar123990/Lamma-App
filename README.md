@@ -1,6 +1,6 @@
 # 🦙 Lamma - Modern Social Media Platform
 
-![Lamma Social App](https://via.placeholder.com/800x400/9333EA/FFFFFF?text=Lamma+Social+Media+App)
+![Lamma Social App](https://lamma-app-amber.vercel.app/)
 
 ## 📌 Overview
 

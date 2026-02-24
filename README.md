@@ -1,16 +1,46 @@
-# React + Vite
+# 🦙 Lamma - Modern Social Media Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Lamma Social App](https://via.placeholder.com/800x400/9333EA/FFFFFF?text=Lamma+Social+Media+App)
 
-Currently, two official plugins are available:
+## 📌 Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Lamma** is a fully-featured, highly responsive social media web application built with modern web technologies. It provides a seamless user experience with features like real-time context-aware navigation, dynamic theme switching (Dark/Light mode), and robust state management.
 
-## React Compiler
+🔗 **Live Demo:** [Visit Lamma App Here](https://lamma-app-amber.vercel.app/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Key Features
 
-## Expanding the ESLint configuration
+- **🔐 Authentication & Authorization:** Secure user login and registration using JWT tokens.
+- **📱 Context-Aware Navigation:** A smart, responsive bottom/top navigation bar that adapts its buttons based on the user's current route (Mobile-first approach).
+- **🌓 Dark/Light Mode:** Full support for system-based or manual theme toggling with a beautiful Glassmorphism design.
+- **📝 Complete CRUD Operations:** Users can create, read, update, and delete posts and comments seamlessly.
+- **🔔 Smart Notifications:** Real-time visual feedback and unread badges for user interactions (likes, comments, follows).
+- **🔖 Bookmarks (Saved Posts):** Ability to save favorite posts and view them in a dedicated collection.
+- **⚡ Optimistic UI Updates:** Instant UI feedback on likes, follows, and saves before the server responds, ensuring a snappy feel.
+- **🔍 Dynamic SEO Meta Tags:** Page titles and meta descriptions update dynamically based on the current view.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+
+- **Frontend Framework:** React 18 (Vite)
+- **Styling & UI:** Tailwind CSS, HeroUI (NextUI), Lucide-React (Icons)
+- **State Management & Data Fetching:** TanStack Query (React Query)
+- **Routing:** React Router v6
+- **Theme Management:** Next-Themes
+- **SEO:** React Helmet Async
+- **Deployment:** Vercel
+
+## 🚀 Getting Started
+
+To get a local copy up and running, follow these simple steps.
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/Omar123990/Lamma-App.git
+   ```

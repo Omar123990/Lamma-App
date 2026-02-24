@@ -42,24 +42,15 @@ export default function PostCard({ post, disableModal = false }) {
 
   const fullUserData = apiUser || contextUser;
 
-  if (!post) return null;
-
-  const { user, body, createdAt, _id, likes } = post;
-
-  const isLiked =
-    fullUserData &&
-    likes?.some(
-      (id) => id === fullUserData._id || id?._id === fullUserData._id,
-    );
-  const isOwner = fullUserData?._id === user?._id;
-
   const actualIsFollowing =
     fullUserData?.following?.some(
-      (f) => f === user?._id || f?._id === user?._id,
+      (f) => f === post?.user?._id || f?._id === post?.user?._id,
     ) || false;
 
   const actualIsSaved =
-    fullUserData?.bookmarks?.some((b) => b === _id || b?._id === _id) || false;
+    fullUserData?.bookmarks?.some(
+      (b) => b === post?._id || b?._id === post?._id,
+    ) || false;
 
   const [optimisticFollow, setOptimisticFollow] = useState(null);
   const [optimisticSave, setOptimisticSave] = useState(null);
@@ -68,32 +59,19 @@ export default function PostCard({ post, disableModal = false }) {
     optimisticFollow !== null ? optimisticFollow : actualIsFollowing;
   const isSavedLocal = optimisticSave !== null ? optimisticSave : actualIsSaved;
 
-  let postImage = post.image || post.imgUrl || post.cover || post.photo || null;
-  if (postImage && !postImage.startsWith("http"))
+  let postImage =
+    post?.image || post?.imgUrl || post?.cover || post?.photo || null;
+  if (postImage && !postImage.startsWith("http")) {
     postImage = `https://linked-posts.routemisr.com/${postImage}`;
-
-  const [editContent, setEditContent] = useState(body);
-  const [editImage, setEditImage] = useState(null);
-  const [previewImage, setPreviewImage] = useState(postImage);
-  const [prevBody, setPrevBody] = useState(body);
-
-  if (body !== prevBody) {
-    setPrevBody(body);
-    setEditContent(body);
-    setPreviewImage(postImage);
   }
 
-  const handleOpenPost = () => {
-    if (!disableModal) setSearchParams({ postId: _id });
-  };
-
-  const handleImageClick = (e) => {
-    e.stopPropagation();
-    imageModal.onOpen();
-  };
+  const [editContent, setEditContent] = useState(post?.body || "");
+  const [editImage, setEditImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(postImage);
+  const [prevBody, setPrevBody] = useState(post?.body || "");
 
   const { mutate: handleDelete, isPending: isDeleting } = useMutation({
-    mutationFn: () => deletePost(_id),
+    mutationFn: () => deletePost(post?._id),
     onSuccess: () => {
       toast.success("Deleted 🗑️");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -106,7 +84,7 @@ export default function PostCard({ post, disableModal = false }) {
       const formData = new FormData();
       formData.append("body", editContent);
       if (editImage) formData.append("image", editImage);
-      return updatePost({ postId: _id, formData });
+      return updatePost({ postId: post?._id, formData });
     },
     onSuccess: () => {
       toast.success("Updated ✨");
@@ -116,7 +94,7 @@ export default function PostCard({ post, disableModal = false }) {
   });
 
   const { mutate: handleLikeMutation, isPending: isLiking } = useMutation({
-    mutationFn: () => toggleLike(_id),
+    mutationFn: () => toggleLike(post?._id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["userPosts"] });
@@ -124,7 +102,7 @@ export default function PostCard({ post, disableModal = false }) {
   });
 
   const { mutate: handleFollow, isPending: isFollowingPending } = useMutation({
-    mutationFn: () => toggleFollowUser(user?._id),
+    mutationFn: () => toggleFollowUser(post?.user?._id),
     onMutate: () => {
       setOptimisticFollow(!isFollowingLocal);
     },
@@ -132,7 +110,7 @@ export default function PostCard({ post, disableModal = false }) {
       setOptimisticFollow(null);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       toast.success(
-        !isActuallyFollowing ? "Followed successfully! 🤝" : "Unfollowed",
+        !actualIsFollowing ? "Followed successfully! 🤝" : "Unfollowed",
       );
     },
     onError: () => {
@@ -142,7 +120,7 @@ export default function PostCard({ post, disableModal = false }) {
   });
 
   const { mutate: handleSave, isPending: isSavingPending } = useMutation({
-    mutationFn: () => toggleSavePost(_id),
+    mutationFn: () => toggleSavePost(post?._id),
     onMutate: () => {
       setOptimisticSave(!isSavedLocal);
     },
@@ -159,6 +137,32 @@ export default function PostCard({ post, disableModal = false }) {
       toast.error("Failed to save post");
     },
   });
+
+  if (post && post.body !== prevBody) {
+    setPrevBody(post.body);
+    setEditContent(post.body);
+    setPreviewImage(postImage);
+  }
+
+  if (!post) return null;
+
+  const { user, body, createdAt, _id, likes } = post;
+
+  const isLiked =
+    fullUserData &&
+    likes?.some(
+      (id) => id === fullUserData._id || id?._id === fullUserData._id,
+    );
+  const isOwner = fullUserData?._id === user?._id;
+
+  const handleOpenPost = () => {
+    if (!disableModal) setSearchParams({ postId: _id });
+  };
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    imageModal.onOpen();
+  };
 
   return (
     <>

@@ -1,12 +1,34 @@
-import { createContext, useState, useEffect, useCallback } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
 
+const getInitialUserData = () => {
+  const encodedToken = localStorage.getItem("userToken");
+  const storedName = localStorage.getItem("userName");
+
+  if (!encodedToken) return null;
+
+  try {
+    const decoded = jwtDecode(encodedToken);
+    return {
+      _id: decoded.user || decoded.userId || decoded._id || decoded.uid,
+      name: storedName || decoded.name || decoded.username || "User",
+      email: decoded.email,
+      role: decoded.role,
+    };
+  } catch (error) {
+    console.error("❌ Token Error:", error);
+    localStorage.removeItem("userToken");
+    return null;
+  }
+};
+
 export default function AuthContextProvider({ children }) {
   const [userToken, setUserToken] = useState(localStorage.getItem("userToken"));
-  const [userData, setUserData] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [userData, setUserData] = useState(getInitialUserData);
+  const [isAuthReady] = useState(true);
 
   const logout = useCallback(() => {
     localStorage.removeItem("userToken");
@@ -16,46 +38,9 @@ export default function AuthContextProvider({ children }) {
   }, []);
 
   const saveUserData = useCallback(() => {
-    const encodedToken = localStorage.getItem("userToken");
-    const storedName = localStorage.getItem("userName");
-
-    if (!encodedToken) {
-      setUserToken(null);
-      setUserData(null);
-      return;
-    }
-
-    try {
-      const decoded = jwtDecode(encodedToken);
-
-      const normalizedUser = {
-        _id: decoded.user || decoded.userId || decoded._id || decoded.uid,
-        name: storedName || decoded.name || decoded.username || "User",
-        email: decoded.email,
-        role: decoded.role,
-      };
-
-      setUserData((prev) => {
-        if (JSON.stringify(prev) === JSON.stringify(normalizedUser))
-          return prev;
-        return normalizedUser;
-      });
-
-      setUserToken(encodedToken);
-    } catch (error) {
-      console.error("❌ Token Error:", error);
-      localStorage.removeItem("userToken");
-      setUserToken(null);
-      setUserData(null);
-    }
+    setUserToken(localStorage.getItem("userToken"));
+    setUserData(getInitialUserData());
   }, []);
-
-  useEffect(() => {
-    if (localStorage.getItem("userToken")) {
-      saveUserData();
-    }
-    setIsAuthReady(true);
-  }, [saveUserData]);
 
   return (
     <AuthContext.Provider

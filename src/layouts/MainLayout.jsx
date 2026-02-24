@@ -24,7 +24,10 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!mounted) return null;
 

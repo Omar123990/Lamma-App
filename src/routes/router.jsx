@@ -1,35 +1,15 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import { useContext } from "react";
+import { createBrowserRouter } from "react-router-dom";
 import Login from "../features/auth/Login";
 import Register from "../features/auth/Register";
 import AuthLayout from "../layouts/AuthLayout";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import Profile from "../pages/Profile";
-
 import SavedPosts from "../pages/SavedPosts";
 import Notifications from "../pages/Notifications";
-
 import ProtectedRoute from "./ProtectedRoute";
-import { AuthContext } from "../context/AuthContext";
 import NotFound from "../pages/NotFound";
-
-const RedirectToUserFeed = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) return null;
-
-  const { userData } = context;
-
-  if (!userData) return null;
-
-  if (userData?.name) {
-    const slug = userData.name.replace(/\s+/g, "").toLowerCase();
-    return <Navigate to={`/feed/${slug}`} replace />;
-  }
-
-  return <Navigate to="/login" replace />;
-};
+import RedirectToUserFeed from "../components/RedirectToUserFeed";
 
 const router = createBrowserRouter([
   {
@@ -67,7 +47,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-
   {
     element: <AuthLayout />,
     children: [
@@ -75,7 +54,6 @@ const router = createBrowserRouter([
       { path: "register", element: <Register /> },
     ],
   },
-
   {
     path: "*",
     element: <NotFound />,

@@ -22,8 +22,6 @@ export const EditModal = ({
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
 
-  // ✅ الحل الرسمي من React: (Derived State) بدل الـ useEffect
-  // بنعمل State تحفظ حالة المودال القديمة، ولو اتغيرت نحدث البيانات فوراً
   const [prevIsOpen, setPrevIsOpen] = useState(false);
   const [prevPostId, setPrevPostId] = useState(null);
 
@@ -31,7 +29,6 @@ export const EditModal = ({
     setPrevIsOpen(isOpen);
     setPrevPostId(post?._id);
 
-    // لو المودال لسه فاتح، حط بيانات البوست في حقول الإدخال
     if (isOpen && post) {
       setBody(post.body || "");
       setImagePreview(post.image || null);

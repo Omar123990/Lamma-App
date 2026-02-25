@@ -8,6 +8,7 @@ import {
   Bell,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const getNotificationImage = (photo) => {
   if (!photo || photo === "undefined" || photo.includes("undefined"))
@@ -45,15 +46,38 @@ export default function NotificationItem({
   markingId,
   handleMarkOne,
 }) {
+  const navigate = useNavigate();
+
   const sender = notif.actor || notif.user || {};
   const senderName = sender.name || "Someone";
   const senderPhoto = sender.photo;
   const notifType = notif.type || "";
   const isThisMarking = isMarkingOne && markingId === notif._id;
 
+  const handleNotificationClick = () => {
+    if (!notif.isRead) {
+      handleMarkOne(notif._id);
+    }
+
+    const postId = notif.entity?._id;
+    const postCreatorId = notif.entity?.user;
+    const senderId = sender?._id; 
+
+    if (
+      postId &&
+      postCreatorId &&
+      !notifType.toLowerCase().includes("follow")
+    ) {
+      navigate(`/profile/${postCreatorId}?postId=${postId}`);
+    } else if (senderId && notifType.toLowerCase().includes("follow")) {
+      navigate(`/profile/${senderId}`);
+    }
+  };
+
   return (
     <div
-      className={`p-4 flex items-start gap-4 transition-colors ${!notif.isRead ? "bg-white/40 dark:bg-white/5" : "bg-transparent"} ${!isLast ? "border-b border-white/20 dark:border-white/5" : ""}`}
+      onClick={handleNotificationClick}
+      className={`p-4 flex items-start gap-4 transition-all cursor-pointer hover:bg-white/50 dark:hover:bg-white/10 ${!notif.isRead ? "bg-white/40 dark:bg-white/5" : "bg-transparent"} ${!isLast ? "border-b border-white/20 dark:border-white/5" : ""}`}
     >
       <div className="relative shrink-0 pt-1">
         <Avatar
@@ -76,7 +100,10 @@ export default function NotificationItem({
 
           {!notif.isRead ? (
             <button
-              onClick={() => handleMarkOne(notif._id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMarkOne(notif._id);
+              }}
               disabled={isThisMarking}
               className="flex items-center cursor-pointer gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             >

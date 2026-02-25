@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Input,
   Dropdown,
   DropdownTrigger,
@@ -20,22 +19,9 @@ export default function CommentBody({
   handleDelete,
 }) {
   const creator = comment.creator || comment.commentCreator;
-  const userPhoto =
-    creator?.photo?.includes("undefined") || !creator?.photo
-      ? "https://linked-posts.routemisr.com/uploads/default-profile.png"
-      : creator?.photo?.startsWith("http")
-        ? creator.photo
-        : `https://linked-posts.routemisr.com/${creator?.photo}`;
 
   return (
     <div className="flex items-start gap-2">
-      <Avatar
-        src={userPhoto}
-        size="sm"
-        className="shrink-0 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
-        name={creator?.name?.charAt(0) || "U"}
-      />
-
       <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/5 p-3 rounded-2xl rounded-tl-none inline-block min-w-37.5 relative transition-colors shadow-sm">
         <span className="font-bold text-sm text-gray-900 dark:text-white block mb-1">
           {creator?.name}

@@ -17,7 +17,7 @@ function App() {
             reverseOrder={false}
             toastOptions={{
               style: {
-                background: "#333",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "#fff",
                 zIndex: 9999,
               },

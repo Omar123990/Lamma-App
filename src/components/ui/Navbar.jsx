@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Sun, Moon, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AuthContext } from "../../context/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "../../services/authAPI";
 import { getUnreadCount } from "../../services/postsAPI";
 import toast from "react-hot-toast";
@@ -96,6 +96,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
+    QueryClient.clear();
     navigate("/login");
   };
 

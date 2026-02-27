@@ -1,7 +1,6 @@
 import axios from "axios";
 
 const BASE_URL = "https://route-posts.routemisr.com/posts";
-const COMMENTS_URL = "https://linked-posts.routemisr.com/comments";
 
 const getHeaders = () => {
   const token = localStorage.getItem("userToken");
@@ -13,12 +12,9 @@ export const getAllPosts = async (limit = 50) => {
     const { data } = await axios.get(`${BASE_URL}?limit=${limit}`, {
       headers: getHeaders(),
     });
-    if (data.paginationInfo && data.posts) return data.posts;
-    if (data.data && data.data.posts) return data.data.posts;
-    if (data.posts) return data.posts;
-    return [];
+    return data?.data?.posts || [];
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error in getAllPosts:", error);
     return [];
   }
 };
@@ -30,12 +26,9 @@ export const getUserPosts = async (userId) => {
       `https://route-posts.routemisr.com/users/${userId}/posts?limit=100`,
       { headers: getHeaders() },
     );
-    if (data.posts) return data.posts;
-    if (data.data && data.data.posts) return data.data.posts;
-    if (data.data && Array.isArray(data.data)) return data.data;
-    return [];
+    return data?.data?.posts || data?.posts || [];
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error in getUserPosts:", error);
     return [];
   }
 };
@@ -46,13 +39,9 @@ export const getSinglePost = async (postId) => {
     const { data } = await axios.get(`${BASE_URL}/${postId}`, {
       headers: getHeaders(),
     });
-    if (data.post) return data.post;
-    if (data.data && data.data.post) return data.data.post;
-    if (data.data) return data.data;
-    
-    return null;
+    return data?.data?.post || data?.post || null;
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error fetching single post:", error);
     return null;
   }
 };
@@ -99,19 +88,15 @@ export const getPostComments = async (postId) => {
     const { data } = await axios.get(`${BASE_URL}/${postId}/comments`, {
       headers: getHeaders(),
     });
-    if (data.comments) return data.comments;
-    if (data.data && data.data.comments) return data.data.comments;
-    if (data.data && Array.isArray(data.data)) return data.data;
-    return [];
+    return data?.data?.comments || [];
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching comments:", error);
     return [];
   }
 };
 
 export const addComment = async ({ postId, content }) => {
   if (!postId) throw new Error("Post ID is missing");
-
   const { data } = await axios.post(
     `${BASE_URL}/${postId}/comments`,
     { content },
@@ -123,9 +108,7 @@ export const addComment = async ({ postId, content }) => {
 export const deleteComment = async ({ postId, commentId }) => {
   const { data } = await axios.delete(
     `${BASE_URL}/${postId}/comments/${commentId}`,
-    {
-      headers: getHeaders(),
-    },
+    { headers: getHeaders() },
   );
   return data;
 };
@@ -151,7 +134,6 @@ export const toggleCommentLike = async ({ postId, commentId }) => {
 export const addReply = async ({ postId, commentId, content }) => {
   const formData = new FormData();
   formData.append("content", content);
-
   const { data } = await axios.post(
     `${BASE_URL}/${postId}/comments/${commentId}/replies`,
     formData,
@@ -166,36 +148,9 @@ export const getCommentReplies = async (postId, commentId) => {
       `${BASE_URL}/${postId}/comments/${commentId}/replies?limit=10`,
       { headers: getHeaders() },
     );
-
-    console.log("📦 Parsing Replies Data:", data);
-
-    if (Array.isArray(data)) return data;
-    if (data.comments && Array.isArray(data.comments)) return data.comments;
-    if (data.replies && Array.isArray(data.replies)) return data.replies;
-
-    if (data.data) {
-      if (Array.isArray(data.data)) return data.data;
-
-      if (typeof data.data === "object") {
-        if (data.data.comments && Array.isArray(data.data.comments))
-          return data.data.comments;
-        if (data.data.replies && Array.isArray(data.data.replies))
-          return data.data.replies;
-
-        const keys = Object.keys(data.data);
-        for (const key of keys) {
-          if (Array.isArray(data.data[key])) {
-            console.log(` Found replies in key: data.data.${key}`);
-            return data.data[key];
-          }
-        }
-      }
-    }
-
-    console.warn(" Could not find any array in response");
-    return [];
+    return data?.data?.replies || [];
   } catch (error) {
-    console.error(" Error fetching replies:", error);
+    console.error("❌ Error fetching replies:", error);
     return [];
   }
 };
@@ -224,29 +179,7 @@ export const getSavedPosts = async () => {
       `https://route-posts.routemisr.com/users/bookmarks`,
       { headers: getHeaders() },
     );
-
-    console.log("📥 Saved Posts Response:", data);
-
-    if (Array.isArray(data)) return data;
-    if (data.bookmarks && Array.isArray(data.bookmarks)) return data.bookmarks;
-    if (data.data && Array.isArray(data.data)) return data.data;
-
-    if (data.data && typeof data.data === "object") {
-      if (data.data.bookmarks && Array.isArray(data.data.bookmarks))
-        return data.data.bookmarks;
-      if (data.data.posts && Array.isArray(data.data.posts))
-        return data.data.posts;
-
-      const keys = Object.keys(data.data);
-      for (const key of keys) {
-        if (Array.isArray(data.data[key])) {
-          console.log(`✅ Found saved posts in: data.data.${key}`);
-          return data.data[key];
-        }
-      }
-    }
-
-    return [];
+    return data?.data?.bookmarks || [];
   } catch (error) {
     console.error("❌ Error fetching saved posts:", error);
     return [];
@@ -259,36 +192,7 @@ export const getNotifications = async () => {
       `https://route-posts.routemisr.com/notifications`,
       { headers: getHeaders() },
     );
-
-    console.log("🔔 Notifications Response:", data);
-
-    if (Array.isArray(data)) return data;
-    if (data.notifications && Array.isArray(data.notifications))
-      return data.notifications;
-    if (data.data && Array.isArray(data.data)) return data.data;
-
-    if (data.data && typeof data.data === "object") {
-      if (data.data.notifications && Array.isArray(data.data.notifications))
-        return data.data.notifications;
-
-      const keys = Object.keys(data.data);
-      for (const key of keys) {
-        if (Array.isArray(data.data[key])) {
-          console.log(`✅ Found notifications in: data.data.${key}`);
-          return data.data[key];
-        }
-      }
-    }
-
-    const rootKeys = Object.keys(data);
-    for (const key of rootKeys) {
-      if (Array.isArray(data[key])) {
-        console.log(`✅ Found notifications in root: data.${key}`);
-        return data[key];
-      }
-    }
-
-    return [];
+    return data?.data?.notifications || [];
   } catch (error) {
     console.error("❌ Error fetching notifications:", error);
     return [];
@@ -301,10 +205,7 @@ export const getUnreadCount = async () => {
       `https://route-posts.routemisr.com/notifications/unread-count`,
       { headers: getHeaders() },
     );
-
-    const count = data?.data?.unreadCount || 0;
-
-    return Number(count);
+    return Number(data?.data?.unreadCount || 0);
   } catch (error) {
     console.error("❌ Error fetching unread count:", error);
     return 0;

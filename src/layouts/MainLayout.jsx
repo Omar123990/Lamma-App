@@ -29,7 +29,22 @@ export default function MainLayout() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth", 
+    });
+  }, [location.pathname]); 
+
   if (!mounted) return null;
+
+
 
   const isDarkMode = resolvedTheme === "dark";
   const currentBgImage = isDarkMode ? bgDark : bgLight;

@@ -38,7 +38,23 @@ const registerSchema = z
       .string()
       .refine((val) => new Date(val).toString() !== "Invalid Date", {
         message: "Invalid Date",
-      }),
+      })
+      .refine((date) => {
+        const today = new Date();
+        const birthDate = new Date(date);
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < birthDate.getDate())
+        ) {
+          age--;
+        }
+
+        return age >= 18;
+      }, "Sorry, you must be over 18 years old"),
     gender: z.enum(["male", "female"], {
       errorMap: () => ({ message: "Select gender" }),
     }),
@@ -154,6 +170,7 @@ export default function Register() {
           <Input
             {...register("dateOfBirth")}
             type="date"
+            max={new Date().toISOString().split("T")[0]}
             isInvalid={!!errors.dateOfBirth}
             errorMessage={errors.dateOfBirth?.message}
             label="Date of Birth"

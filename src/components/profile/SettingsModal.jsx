@@ -42,6 +42,7 @@ export default function SettingsModal({ isOpen, onClose, userInfo }) {
 
   const handleLogout = () => {
     logout();
+    queryClient.clear();
     navigate("/login");
     onClose();
   };
